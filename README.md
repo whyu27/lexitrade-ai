@@ -7,7 +7,7 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?style=flat&logo=typescript)](https://www.typescriptlang.org/)
 [![Tailwind CSS](https://img.shields.io/badge/TailwindCSS-v4-38bdf8?style=flat&logo=tailwindcss)](https://tailwindcss.com/)
 [![SQLite](https://img.shields.io/badge/Database-SQLite%20(LibSQL)-003B57?style=flat&logo=sqlite)](https://sqlite.org/)
-[![Vitest](https://img.shields.io/badge/Tests-33%20Passed-brightgreen?style=flat&logo=vitest)](https://vitest.dev/)
+[![Vitest](https://img.shields.io/badge/Tests-36%20Passed-brightgreen?style=flat&logo=vitest)](https://vitest.dev/)
 
 ---
 
@@ -21,7 +21,7 @@ Cryptocurrency market participants frequently struggle to distinguish between ve
 3. It retrieves live, verifiable market evidence (Binance Spot and CoinPaprika fallback).
 4. It evaluates an explicit **6-rule deterministic decision engine** (Version `v1.0.0`) producing strictly repeatable `BUY` or `NO TRADE` outcomes.
 5. If all conditions pass, it simulates a practice trade with strict risk limits (stop-loss, take-profit, position sizing).
-6. It permanently records every step into an **inspectable decision ledger**.
+6. It permanently records every step into a **tamper-evident decision ledger with SHA-256 cryptographic hash chaining**.
 
 > [!IMPORTANT]
 > **Safety & Responsible AI:** LexiTrade AI executes **virtual practice trades only**. It does not handle private wallet keys, execute real exchange orders, or make promises of financial profitability.
@@ -102,7 +102,7 @@ npm install
 # 3. Configure environment
 cp .env.example .env.local
 
-# 4. Run test suite (33 unit & E2E tests)
+# 4. Run test suite (36 unit & E2E tests)
 npm test
 
 # 5. Start development server
@@ -140,6 +140,7 @@ The dashboard provides 3 interactive 1-click presets demonstrating the full auto
 | `GET` | `/api/trades` | Returns paper trading history and active positions |
 | `POST` | `/api/trades/[id]/close` | Closes active paper trade with realized P/L calculation |
 | `POST` | `/api/trades/reset` | Resets simulated paper portfolio to clean $100,000 baseline |
+| `GET` | `/api/ledger/verify` | Verifies SHA-256 cryptographic chain integrity of the audit ledger |
 | `GET` | `/api/health` | Service health status and database connectivity check |
 
 ---

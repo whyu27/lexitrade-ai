@@ -8,12 +8,14 @@ import {
   getAnalysisById,
   getAnalyses,
   getPaperTrades,
+  verifyAuditLedgerIntegrity,
 } from "../src/lib/db/client";
+import { seedInitialDemoData } from "../src/lib/db/seed";
 import type { Analysis, Evidence, Decision, PaperTrade } from "../src/lib/schemas";
 
 describe("Database & Persistence Layer", () => {
   beforeAll(async () => {
-    process.env.DATABASE_URL = "file:test-lexitrade.db";
+    process.env.DATABASE_URL = `file:test-lexitrade-${Date.now()}.db`;
     await initDb();
   });
 
@@ -88,5 +90,33 @@ describe("Database & Persistence Layer", () => {
 
     const trades = await getPaperTrades();
     expect(trades.some((t) => t.id === "test-trade-1")).toBe(true);
+  });
+
+  it("should compute deterministic SHA-256 hash chaining on saved records", async () => {
+    const record = await getAnalysisById("test-analysis-1");
+    expect(record.analysis?.recordHash).toBeDefined();
+    expect(record.analysis?.recordHash?.length).toBe(64); // 64 hex characters for SHA-256
+    expect(record.decision?.recordHash).toBeDefined();
+    expect(record.decision?.recordHash?.length).toBe(64);
+  });
+
+  it("should verify immutable audit ledger integrity successfully", async () => {
+    const integrity = await verifyAuditLedgerIntegrity();
+    if (!integrity.valid) {
+      console.log("INTEGRITY ERROR DETAIL:", integrity.error);
+    }
+    expect(integrity.valid).toBe(true);
+    expect(integrity.totalAnalyses).toBeGreaterThan(0);
+  });
+
+  it("should seed realistic demo cases when database is empty", async () => {
+    const result = await seedInitialDemoData(true);
+    expect(result.seeded).toBe(true);
+    expect(result.count).toBe(3);
+
+    const list = await getAnalyses();
+    expect(list.some((a) => a.id === "an-seed-001-sec-btc-etf")).toBe(true);
+    expect(list.some((a) => a.id === "an-seed-002-sol-rumor")).toBe(true);
+    expect(list.some((a) => a.id === "an-seed-003-eth-lawsuit-conflict")).toBe(true);
   });
 });

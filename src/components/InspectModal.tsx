@@ -70,6 +70,29 @@ export function InspectModal({ analysisId, onClose }: InspectModalProps) {
           </div>
         ) : data ? (
           <div className="space-y-3 max-h-[75vh] overflow-y-auto pr-1">
+            {/* Cryptographic Hash Chaining Banner */}
+            {data.analysis?.recordHash && (
+              <div className="rounded border border-emerald-500/30 bg-emerald-950/20 p-2.5 font-mono text-[11px] text-zinc-300">
+                <div className="flex items-center justify-between pb-1.5 border-b border-emerald-900/30 mb-1.5">
+                  <div className="flex items-center gap-1.5 text-emerald-400 font-bold">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                    <span>SHA-256 CRYPTOGRAPHIC INTEGRITY VERIFIED</span>
+                  </div>
+                  <span className="text-[10px] text-zinc-500">IMMUTABLE AUDIT CHAIN</span>
+                </div>
+                <div className="space-y-0.5 text-[10px] text-zinc-400">
+                  <div className="flex items-center gap-2">
+                    <span className="text-zinc-500 w-24 shrink-0">RECORD HASH:</span>
+                    <span className="font-mono text-zinc-200 select-all truncate">{data.analysis.recordHash}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-zinc-500 w-24 shrink-0">PREV HASH:</span>
+                    <span className="font-mono text-zinc-400 select-all truncate">{data.analysis.prevHash || "GENESIS_ROOT"}</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <VerificationCard analysis={data.analysis} evidences={data.evidences} />
             <RegulatoryCard analysis={data.analysis} />
             {data.decision && <DecisionCard decision={data.decision} />}

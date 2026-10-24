@@ -26,9 +26,14 @@ export function AnalysesLedgerView({
   return (
     <div className="rounded border border-zinc-800 bg-zinc-900/40 p-4 font-mono text-xs">
       <div className="mb-3 flex items-center justify-between border-b border-zinc-800 pb-2">
-        <span className="font-semibold text-zinc-200">
-          [PERMANENT COMPLIANCE & DECISION LEDGER]
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="font-semibold text-zinc-200">
+            [PERMANENT COMPLIANCE & DECISION LEDGER]
+          </span>
+          <span className="rounded bg-emerald-500/10 border border-emerald-500/30 px-1.5 py-0.2 font-mono text-[10px] text-emerald-400">
+            SHA-256 HASH CHAIN
+          </span>
+        </div>
         <span className="text-[11px] text-zinc-500">
           COUNT: {analyses.length} ENTRIES
         </span>
@@ -38,12 +43,13 @@ export function AnalysesLedgerView({
         <table className="w-full text-left font-mono text-[11px]">
           <thead>
             <tr className="border-b border-zinc-800 text-[10px] text-zinc-500 uppercase">
-              <th className="pb-2 w-36">Timestamp (UTC)</th>
-              <th className="pb-2 w-16">Asset</th>
-              <th className="pb-2 w-28">Status</th>
-              <th className="pb-2 w-24">Sentiment</th>
+              <th className="pb-2 w-32">Timestamp (UTC)</th>
+              <th className="pb-2 w-14">Asset</th>
+              <th className="pb-2 w-24">Status</th>
+              <th className="pb-2 w-20">Sentiment</th>
+              <th className="pb-2 w-24">Chain Hash</th>
               <th className="pb-2">Claim Headline</th>
-              <th className="pb-2 text-right w-20">Audit</th>
+              <th className="pb-2 text-right w-16">Audit</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-zinc-800/60">
@@ -72,8 +78,15 @@ export function AnalysesLedgerView({
                     {item.verificationStatus}
                   </span>
                 </td>
-                <td className="py-2.5 text-zinc-300">
-                  {item.sentiment}
+                <td className="py-2.5 text-zinc-300">{item.sentiment}</td>
+                <td className="py-2.5 font-mono text-[10px]">
+                  {item.recordHash ? (
+                    <span className="rounded bg-zinc-950 border border-zinc-800 px-1 py-0.5 text-zinc-300" title={item.recordHash}>
+                      {item.recordHash.slice(0, 8)}…
+                    </span>
+                  ) : (
+                    <span className="text-zinc-600">—</span>
+                  )}
                 </td>
                 <td className="py-2.5 text-zinc-300 font-sans text-xs truncate max-w-md pr-4">
                   {item.claim}

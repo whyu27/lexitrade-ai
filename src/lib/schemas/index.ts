@@ -47,6 +47,8 @@ export const AnalysisSchema = z.object({
   affectedAssets: z.array(z.string()).default([]),
   jurisdiction: z.string().optional().nullable(),
   sourceType: z.string().optional().nullable(),
+  recordHash: z.string().optional().nullable(),
+  prevHash: z.string().optional().nullable(),
 });
 export type Analysis = z.infer<typeof AnalysisSchema>;
 
@@ -88,6 +90,8 @@ export const DecisionSchema = z.object({
   evidenceIds: z.array(z.string()),
   ruleResults: z.array(RuleResultSchema),
   rejectionReasons: z.array(z.string()),
+  recordHash: z.string().optional().nullable(),
+  prevHash: z.string().optional().nullable(),
 });
 export type Decision = z.infer<typeof DecisionSchema>;
 

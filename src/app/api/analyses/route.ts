@@ -1,9 +1,14 @@
 import { NextResponse } from "next/server";
 import { getAnalyses } from "@/lib/db/client";
+import { seedInitialDemoData } from "@/lib/db/seed";
 
 export async function GET() {
   try {
-    const list = await getAnalyses();
+    let list = await getAnalyses();
+    if (list.length === 0) {
+      await seedInitialDemoData();
+      list = await getAnalyses();
+    }
     return NextResponse.json({
       success: true,
       data: list,

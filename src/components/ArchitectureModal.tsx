@@ -137,10 +137,10 @@ export function ArchitectureModal({ isOpen, onClose }: ArchitectureModalProps) {
           <div className="rounded border border-zinc-800 bg-zinc-900/40 p-3.5 space-y-1.5">
             <div className="flex items-center gap-2 text-xs font-semibold text-zinc-200">
               <Database className="h-4 w-4 text-amber-400 shrink-0" />
-              <span>4. Practice Sandbox &amp; Immutable Audit</span>
+              <span>4. Practice Sandbox &amp; SHA-256 Audit Chain</span>
             </div>
             <p className="text-[11px] text-zinc-400 leading-normal">
-              Strictly virtual sandbox ($100,000 starting capital) preventing financial exposure. Every analysis step, claim hash, and simulated execution order is stored in a structured SQLite database.
+              Strictly virtual sandbox ($100,000 baseline) preventing capital risk. Every analysis step, claim hash, and simulated execution order is chained with SHA-256 cryptographic hashes in SQLite, guaranteeing tamper-evident audit integrity.
             </p>
           </div>
         </div>
@@ -165,7 +165,7 @@ export function ArchitectureModal({ isOpen, onClose }: ArchitectureModalProps) {
             </div>
             <div className="flex items-center gap-2 text-zinc-300">
               <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
-              <span>Zero hallucination via deterministic gating</span>
+              <span>SHA-256 cryptographic audit ledger chaining</span>
             </div>
           </div>
         </div>

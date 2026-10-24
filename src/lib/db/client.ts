@@ -1,4 +1,5 @@
 import { createClient, type Client } from "@libsql/client";
+import { computeRecordHash, GENESIS_HASH } from "../crypto/audit-hasher";
 import type {
   Analysis,
   Evidence,
@@ -7,11 +8,14 @@ import type {
 } from "../schemas";
 
 let clientInstance: Client | null = null;
+let lastDbUrl: string | null = null;
 
 export function getDb(): Client {
-  if (!clientInstance) {
-    const url = process.env.DATABASE_URL || "file:lexitrade.db";
+  const url = process.env.DATABASE_URL || "file:lexitrade.db";
+  if (!clientInstance || lastDbUrl !== url) {
     clientInstance = createClient({ url });
+    lastDbUrl = url;
+    initialized = false;
   }
   return clientInstance;
 }
@@ -36,7 +40,9 @@ export async function initDb(): Promise<void> {
       uncertainty_notes TEXT NOT NULL,
       affected_assets TEXT NOT NULL,
       jurisdiction TEXT,
-      source_type TEXT
+      source_type TEXT,
+      record_hash TEXT,
+      prev_hash TEXT
     );
 
     CREATE TABLE IF NOT EXISTS evidences (
@@ -60,6 +66,8 @@ export async function initDb(): Promise<void> {
       evidence_ids TEXT NOT NULL,
       rule_results TEXT NOT NULL,
       rejection_reasons TEXT NOT NULL,
+      record_hash TEXT,
+      prev_hash TEXT,
       FOREIGN KEY(analysis_id) REFERENCES analyses(id)
     );
 
@@ -83,8 +91,84 @@ export async function initDb(): Promise<void> {
 
   try {
     await db.execute("ALTER TABLE analyses ADD COLUMN source_type TEXT");
-  } catch {
-    // Column already exists or table freshly created
+  } catch {}
+  try {
+    await db.execute("ALTER TABLE analyses ADD COLUMN record_hash TEXT");
+  } catch {}
+  try {
+    await db.execute("ALTER TABLE analyses ADD COLUMN prev_hash TEXT");
+  } catch {}
+  try {
+    await db.execute("ALTER TABLE decisions ADD COLUMN record_hash TEXT");
+  } catch {}
+  try {
+    await db.execute("ALTER TABLE decisions ADD COLUMN prev_hash TEXT");
+  } catch {}
+
+  // Backfill any unhashed records to ensure 100% cryptographic chain integrity
+  try {
+    const unhashedRes = await db.execute(
+      "SELECT rowid, * FROM analyses WHERE record_hash IS NULL ORDER BY rowid ASC"
+    );
+    if (unhashedRes.rows.length > 0) {
+      const latestRes = await db.execute(
+        "SELECT record_hash FROM analyses WHERE record_hash IS NOT NULL ORDER BY rowid DESC LIMIT 1"
+      );
+      let prev = (latestRes.rows[0]?.record_hash as string) || GENESIS_HASH;
+      for (const r of unhashedRes.rows) {
+        const hash = computeRecordHash(
+          {
+            id: r.id,
+            claim: r.claim,
+            sourceUrl: (r.source_url as string | null) ?? undefined,
+            createdAt: r.created_at,
+            verificationStatus: r.verification_status,
+            sentiment: r.sentiment,
+            regulatoryRisk: r.regulatory_risk,
+            affectedAssets: JSON.parse((r.affected_assets as string) || "[]"),
+            jurisdiction: (r.jurisdiction as string | null) ?? undefined,
+          },
+          prev
+        );
+        await db.execute({
+          sql: "UPDATE analyses SET record_hash = ?, prev_hash = ? WHERE rowid = ?",
+          args: [hash, prev, r.rowid],
+        });
+        prev = hash;
+      }
+    }
+
+    const unhashedDec = await db.execute(
+      "SELECT rowid, * FROM decisions WHERE record_hash IS NULL ORDER BY rowid ASC"
+    );
+    if (unhashedDec.rows.length > 0) {
+      const latestRes = await db.execute(
+        "SELECT record_hash FROM decisions WHERE record_hash IS NOT NULL ORDER BY rowid DESC LIMIT 1"
+      );
+      let prev = (latestRes.rows[0]?.record_hash as string) || GENESIS_HASH;
+      for (const r of unhashedDec.rows) {
+        const hash = computeRecordHash(
+          {
+            id: r.id,
+            analysisId: r.analysis_id,
+            strategyVersion: r.strategy_version,
+            outcome: r.outcome,
+            evaluatedAt: r.evaluated_at,
+            evidenceIds: JSON.parse((r.evidence_ids as string) || "[]"),
+            ruleResults: JSON.parse((r.rule_results as string) || "[]"),
+            rejectionReasons: JSON.parse((r.rejection_reasons as string) || "[]"),
+          },
+          prev
+        );
+        await db.execute({
+          sql: "UPDATE decisions SET record_hash = ?, prev_hash = ? WHERE rowid = ?",
+          args: [hash, prev, r.rowid],
+        });
+        prev = hash;
+      }
+    }
+  } catch (err) {
+    console.warn("Audit ledger backfill notice:", err);
   }
 
   initialized = true;
@@ -94,10 +178,34 @@ export async function initDb(): Promise<void> {
 export async function saveAnalysis(analysis: Analysis): Promise<void> {
   await initDb();
   const db = getDb();
+
+  // If hash is not precomputed, compute chained record hash
+  if (!analysis.recordHash) {
+    const latestRes = await db.execute(
+      "SELECT record_hash FROM analyses WHERE record_hash IS NOT NULL ORDER BY rowid DESC LIMIT 1"
+    );
+    const prevHash = (latestRes.rows[0]?.record_hash as string) || GENESIS_HASH;
+    analysis.prevHash = prevHash;
+    analysis.recordHash = computeRecordHash(
+      {
+        id: analysis.id,
+        claim: analysis.claim,
+        sourceUrl: analysis.sourceUrl,
+        createdAt: analysis.createdAt,
+        verificationStatus: analysis.verificationStatus,
+        sentiment: analysis.sentiment,
+        regulatoryRisk: analysis.regulatoryRisk,
+        affectedAssets: analysis.affectedAssets,
+        jurisdiction: analysis.jurisdiction,
+      },
+      prevHash
+    );
+  }
+
   await db.execute({
     sql: `INSERT OR REPLACE INTO analyses (
-      id, claim, source_url, created_at, verification_status, sentiment, regulatory_risk, summary, uncertainty_notes, affected_assets, jurisdiction, source_type
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      id, claim, source_url, created_at, verification_status, sentiment, regulatory_risk, summary, uncertainty_notes, affected_assets, jurisdiction, source_type, record_hash, prev_hash
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     args: [
       analysis.id,
       analysis.claim,
@@ -111,6 +219,8 @@ export async function saveAnalysis(analysis: Analysis): Promise<void> {
       JSON.stringify(analysis.affectedAssets),
       analysis.jurisdiction ?? null,
       analysis.sourceType ?? "HEURISTIC_RULE_ENGINE",
+      analysis.recordHash ?? null,
+      analysis.prevHash ?? null,
     ],
   });
 }
@@ -138,10 +248,32 @@ export async function saveEvidence(evidence: Evidence): Promise<void> {
 export async function saveDecision(decision: Decision): Promise<void> {
   await initDb();
   const db = getDb();
+
+  if (!decision.recordHash) {
+    const latestRes = await db.execute(
+      "SELECT record_hash FROM decisions WHERE record_hash IS NOT NULL ORDER BY rowid DESC LIMIT 1"
+    );
+    const prevHash = (latestRes.rows[0]?.record_hash as string) || GENESIS_HASH;
+    decision.prevHash = prevHash;
+    decision.recordHash = computeRecordHash(
+      {
+        id: decision.id,
+        analysisId: decision.analysisId,
+        strategyVersion: decision.strategyVersion,
+        outcome: decision.outcome,
+        evaluatedAt: decision.evaluatedAt,
+        evidenceIds: decision.evidenceIds,
+        ruleResults: decision.ruleResults,
+        rejectionReasons: decision.rejectionReasons,
+      },
+      prevHash
+    );
+  }
+
   await db.execute({
     sql: `INSERT OR REPLACE INTO decisions (
-      id, analysis_id, strategy_version, outcome, evaluated_at, evidence_ids, rule_results, rejection_reasons
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      id, analysis_id, strategy_version, outcome, evaluated_at, evidence_ids, rule_results, rejection_reasons, record_hash, prev_hash
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     args: [
       decision.id,
       decision.analysisId,
@@ -151,6 +283,8 @@ export async function saveDecision(decision: Decision): Promise<void> {
       JSON.stringify(decision.evidenceIds),
       JSON.stringify(decision.ruleResults),
       JSON.stringify(decision.rejectionReasons),
+      decision.recordHash ?? null,
+      decision.prevHash ?? null,
     ],
   });
 }
@@ -212,6 +346,8 @@ export async function getAnalyses(): Promise<Analysis[]> {
     affectedAssets: JSON.parse((row.affected_assets as string) || "[]"),
     jurisdiction: (row.jurisdiction as string | null) ?? undefined,
     sourceType: (row.source_type as string | null) ?? undefined,
+    recordHash: (row.record_hash as string | null) ?? undefined,
+    prevHash: (row.prev_hash as string | null) ?? undefined,
   }));
 }
 
@@ -246,6 +382,8 @@ export async function getAnalysisById(id: string): Promise<{
     affectedAssets: JSON.parse((row.affected_assets as string) || "[]"),
     jurisdiction: (row.jurisdiction as string | null) ?? undefined,
     sourceType: (row.source_type as string | null) ?? undefined,
+    recordHash: (row.record_hash as string | null) ?? undefined,
+    prevHash: (row.prev_hash as string | null) ?? undefined,
   };
 
   const eRes = await db.execute({
@@ -281,6 +419,8 @@ export async function getAnalysisById(id: string): Promise<{
       evidenceIds: JSON.parse((d.evidence_ids as string) || "[]"),
       ruleResults: JSON.parse((d.rule_results as string) || "[]"),
       rejectionReasons: JSON.parse((d.rejection_reasons as string) || "[]"),
+      recordHash: (d.record_hash as string | null) ?? undefined,
+      prevHash: (d.prev_hash as string | null) ?? undefined,
     };
 
     const tRes = await db.execute({
@@ -329,4 +469,71 @@ export async function getPaperTrades(): Promise<PaperTrade[]> {
     pnl: t.pnl !== null ? Number(t.pnl) : undefined,
     status: t.status as PaperTrade["status"],
   }));
+}
+
+export async function verifyAuditLedgerIntegrity(): Promise<{
+  valid: boolean;
+  totalAnalyses: number;
+  totalDecisions: number;
+  latestAnalysisHash?: string;
+  error?: string;
+}> {
+  await initDb();
+  const db = getDb();
+
+  const analysesRes = await db.execute("SELECT rowid, * FROM analyses ORDER BY rowid ASC");
+  let prevAnalysisHash = GENESIS_HASH;
+
+  for (let i = 0; i < analysesRes.rows.length; i++) {
+    const row = analysesRes.rows[i];
+    const recordHash = row.record_hash as string | null;
+    const recordedPrev = row.prev_hash as string | null;
+
+    if (!recordHash) continue; // Skip legacy unhashed records if any
+
+    if (recordedPrev && recordedPrev !== prevAnalysisHash) {
+      return {
+        valid: false,
+        totalAnalyses: analysesRes.rows.length,
+        totalDecisions: 0,
+        error: `Hash chain broken at analysis record ${row.id}: expected prev_hash ${prevAnalysisHash}, found ${recordedPrev}`,
+      };
+    }
+
+    const computed = computeRecordHash(
+      {
+        id: row.id,
+        claim: row.claim,
+        sourceUrl: (row.source_url as string | null) ?? undefined,
+        createdAt: row.created_at,
+        verificationStatus: row.verification_status,
+        sentiment: row.sentiment,
+        regulatoryRisk: row.regulatory_risk,
+        affectedAssets: JSON.parse((row.affected_assets as string) || "[]"),
+        jurisdiction: (row.jurisdiction as string | null) ?? undefined,
+      },
+      prevAnalysisHash
+    );
+
+    if (computed.toLowerCase() !== recordHash.toLowerCase()) {
+      return {
+        valid: false,
+        totalAnalyses: analysesRes.rows.length,
+        totalDecisions: 0,
+        error: `Payload integrity mismatch at analysis record ${row.id}`,
+      };
+    }
+
+    prevAnalysisHash = recordHash;
+  }
+
+  const decRes = await db.execute("SELECT count(*) as cnt FROM decisions");
+  const totalDecisions = Number(decRes.rows[0]?.cnt || 0);
+
+  return {
+    valid: true,
+    totalAnalyses: analysesRes.rows.length,
+    totalDecisions,
+    latestAnalysisHash: prevAnalysisHash !== GENESIS_HASH ? prevAnalysisHash : undefined,
+  };
 }
