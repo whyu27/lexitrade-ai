@@ -195,13 +195,6 @@ export default function HomePage() {
           </div>
         )}
 
-        {/* Dynamic Simulation Portfolio & Balance Strip */}
-        <PortfolioSummary
-          trades={tradesList}
-          livePrices={livePrices}
-          onResetPortfolio={handleResetPortfolio}
-        />
-
         {/* Terminal Workspace Tab */}
         {activeTab === "dashboard" && (
           <div className="space-y-4">
@@ -256,10 +249,17 @@ export default function HomePage() {
 
         {/* Positions Tab */}
         {activeTab === "trades" && (
-          <TradesHistoryView
-            trades={tradesList}
-            onCloseTrade={handleCloseTrade}
-          />
+          <div className="space-y-4">
+            <PortfolioSummary
+              trades={tradesList}
+              livePrices={livePrices}
+              onResetPortfolio={handleResetPortfolio}
+            />
+            <TradesHistoryView
+              trades={tradesList}
+              onCloseTrade={handleCloseTrade}
+            />
+          </div>
         )}
       </main>
 
