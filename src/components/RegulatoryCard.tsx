@@ -43,6 +43,15 @@ export function RegulatoryCard({ analysis }: RegulatoryCardProps) {
           [REGULATORY INTELLIGENCE DOSSIER]
         </span>
         <div className="flex items-center gap-1.5 text-[11px]">
+          {analysis.sourceType === "LLM_STRUCTURED" ? (
+            <span className="rounded border border-purple-500/40 bg-purple-500/10 px-2 py-0.5 font-bold text-purple-300">
+              AI: GEMINI LIVE
+            </span>
+          ) : (
+            <span className="rounded border border-zinc-700 bg-zinc-800/80 px-2 py-0.5 font-mono text-zinc-400">
+              ENGINE: DETERMINISTIC
+            </span>
+          )}
           <span className={`rounded border px-2 py-0.5 font-bold ${getSentimentColor(analysis.sentiment)}`}>
             SENTIMENT: {analysis.sentiment}
           </span>

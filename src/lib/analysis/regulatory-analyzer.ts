@@ -147,10 +147,14 @@ Return a valid JSON object matching this exact schema:
   "jurisdiction": "US" | "EU" | "UK" | "Singapore" | "Global"
 }`;
 
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${this.geminiKey}`;
+    const model = process.env.GEMINI_MODEL || "gemini-3.5-flash-lite";
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
     const response = await fetch(url, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "x-goog-api-key": this.geminiKey || "",
+      },
       body: JSON.stringify({
         contents: [{ parts: [{ text: prompt }] }],
         generationConfig: { responseMimeType: "application/json" },
@@ -165,13 +169,25 @@ Return a valid JSON object matching this exact schema:
     const rawText = json.candidates?.[0]?.content?.parts?.[0]?.text;
     const parsed = JSON.parse(rawText);
 
+    // Normalize sentiment
+    const rawSentiment = String(parsed.sentiment || "NEUTRAL").toUpperCase();
+    const sentiment: Sentiment = ["BULLISH", "BEARISH", "NEUTRAL", "UNCERTAIN"].includes(rawSentiment)
+      ? (rawSentiment as Sentiment)
+      : "NEUTRAL";
+
+    // Normalize risk
+    const rawRisk = String(parsed.regulatoryRisk || "LOW").toUpperCase();
+    const regulatoryRisk: RegulatoryRisk = ["LOW", "MEDIUM", "HIGH", "UNKNOWN"].includes(rawRisk)
+      ? (rawRisk as RegulatoryRisk)
+      : "LOW";
+
     return {
-      sentiment: parsed.sentiment,
-      regulatoryRisk: parsed.regulatoryRisk,
-      summary: parsed.summary,
+      sentiment,
+      regulatoryRisk,
+      summary: parsed.summary || "Regulatory analysis synthesized by Gemini model.",
       uncertaintyNotes: Array.isArray(parsed.uncertaintyNotes) ? parsed.uncertaintyNotes : [],
-      affectedAssets: Array.isArray(parsed.affectedAssets) ? parsed.affectedAssets : ["BTC"],
-      jurisdiction: parsed.jurisdiction,
+      affectedAssets: Array.isArray(parsed.affectedAssets) && parsed.affectedAssets.length > 0 ? parsed.affectedAssets : ["BTC"],
+      jurisdiction: parsed.jurisdiction || "Global",
       sourceType: "LLM_STRUCTURED",
     };
   }

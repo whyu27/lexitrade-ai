@@ -89,6 +89,7 @@ export async function POST(request: NextRequest) {
       ],
       affectedAssets: analysisOutput.affectedAssets,
       jurisdiction: analysisOutput.jurisdiction,
+      sourceType: analysisOutput.sourceType,
     };
 
     // 6. Persist Analysis and Evidences

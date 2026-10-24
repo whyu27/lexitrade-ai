@@ -35,7 +35,8 @@ export async function initDb(): Promise<void> {
       summary TEXT NOT NULL,
       uncertainty_notes TEXT NOT NULL,
       affected_assets TEXT NOT NULL,
-      jurisdiction TEXT
+      jurisdiction TEXT,
+      source_type TEXT
     );
 
     CREATE TABLE IF NOT EXISTS evidences (
@@ -80,6 +81,12 @@ export async function initDb(): Promise<void> {
     );
   `);
 
+  try {
+    await db.execute("ALTER TABLE analyses ADD COLUMN source_type TEXT");
+  } catch {
+    // Column already exists or table freshly created
+  }
+
   initialized = true;
 }
 
@@ -89,8 +96,8 @@ export async function saveAnalysis(analysis: Analysis): Promise<void> {
   const db = getDb();
   await db.execute({
     sql: `INSERT OR REPLACE INTO analyses (
-      id, claim, source_url, created_at, verification_status, sentiment, regulatory_risk, summary, uncertainty_notes, affected_assets, jurisdiction
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      id, claim, source_url, created_at, verification_status, sentiment, regulatory_risk, summary, uncertainty_notes, affected_assets, jurisdiction, source_type
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     args: [
       analysis.id,
       analysis.claim,
@@ -103,6 +110,7 @@ export async function saveAnalysis(analysis: Analysis): Promise<void> {
       JSON.stringify(analysis.uncertaintyNotes),
       JSON.stringify(analysis.affectedAssets),
       analysis.jurisdiction ?? null,
+      analysis.sourceType ?? "HEURISTIC_RULE_ENGINE",
     ],
   });
 }
@@ -203,6 +211,7 @@ export async function getAnalyses(): Promise<Analysis[]> {
     uncertaintyNotes: JSON.parse((row.uncertainty_notes as string) || "[]"),
     affectedAssets: JSON.parse((row.affected_assets as string) || "[]"),
     jurisdiction: (row.jurisdiction as string | null) ?? undefined,
+    sourceType: (row.source_type as string | null) ?? undefined,
   }));
 }
 
@@ -236,6 +245,7 @@ export async function getAnalysisById(id: string): Promise<{
     uncertaintyNotes: JSON.parse((row.uncertainty_notes as string) || "[]"),
     affectedAssets: JSON.parse((row.affected_assets as string) || "[]"),
     jurisdiction: (row.jurisdiction as string | null) ?? undefined,
+    sourceType: (row.source_type as string | null) ?? undefined,
   };
 
   const eRes = await db.execute({

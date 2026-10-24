@@ -46,6 +46,7 @@ export const AnalysisSchema = z.object({
   uncertaintyNotes: z.array(z.string()),
   affectedAssets: z.array(z.string()).default([]),
   jurisdiction: z.string().optional().nullable(),
+  sourceType: z.string().optional().nullable(),
 });
 export type Analysis = z.infer<typeof AnalysisSchema>;
 
