@@ -6,10 +6,15 @@ import type { PaperTrade } from "@/lib/schemas";
 
 interface PaperTradeCardProps {
   trade: PaperTrade;
+  currentPrice?: number;
   onCloseTrade?: (tradeId: string) => Promise<void>;
 }
 
-export function PaperTradeCard({ trade, onCloseTrade }: PaperTradeCardProps) {
+export function PaperTradeCard({
+  trade,
+  currentPrice: currentPriceProp,
+  onCloseTrade,
+}: PaperTradeCardProps) {
   const [isClosing, setIsClosing] = useState(false);
   const isOpen = trade.status === "OPEN";
 
@@ -25,6 +30,13 @@ export function PaperTradeCard({ trade, onCloseTrade }: PaperTradeCardProps) {
 
   const pnl = trade.pnl ?? 0;
   const isPnlPositive = pnl >= 0;
+
+  // Calculate live unrealized P&L when open
+  const currentPrice = currentPriceProp && currentPriceProp > 0 ? currentPriceProp : trade.entryPrice;
+  const priceDiff = currentPrice - trade.entryPrice;
+  const unrealizedPnl = Number((priceDiff * trade.positionSize).toFixed(2));
+  const unrealizedPercent = trade.entryPrice > 0 ? (priceDiff / trade.entryPrice) * 100 : 0;
+  const isUnrealizedPositive = unrealizedPnl >= 0;
 
   return (
     <div className="rounded border border-zinc-700 bg-zinc-900/60 p-4 font-mono text-xs">
@@ -45,7 +57,7 @@ export function PaperTradeCard({ trade, onCloseTrade }: PaperTradeCardProps) {
           <span
             className={`rounded border px-2 py-0.5 text-[10px] font-bold ${
               isOpen
-                ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-400"
+                ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-400 animate-pulse"
                 : "border-zinc-700 bg-zinc-800 text-zinc-400"
             }`}
           >
@@ -87,8 +99,10 @@ export function PaperTradeCard({ trade, onCloseTrade }: PaperTradeCardProps) {
         </div>
       </div>
 
+      {/* PnL and Execution Actions */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-t border-zinc-800 pt-2 text-[11px]">
         <div>
+          {/* Closed trade: show Realized PnL */}
           {!isOpen && (
             <div className="flex items-center gap-1.5">
               <span className="text-zinc-500">REALIZED P&L:</span>
@@ -99,12 +113,27 @@ export function PaperTradeCard({ trade, onCloseTrade }: PaperTradeCardProps) {
               >
                 {isPnlPositive ? "+" : ""}${pnl.toFixed(2)} USD
               </span>
+              <span className="text-[10px] text-zinc-500">
+                (Closed at ${trade.exitPrice?.toLocaleString(undefined, { minimumFractionDigits: 2 }) ?? "Market"})
+              </span>
             </div>
           )}
+
+          {/* Open trade: show live Unrealized PnL */}
           {isOpen && (
-            <span className="text-zinc-500 text-[10px]">
-              Active practice trade • Stop-loss & take-profit monitored against feed
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-zinc-500">UNREALIZED P&L:</span>
+              <span
+                className={`font-bold ${
+                  isUnrealizedPositive ? "text-emerald-400" : "text-rose-400"
+                }`}
+              >
+                {isUnrealizedPositive ? "+" : ""}${unrealizedPnl.toFixed(2)} USD ({isUnrealizedPositive ? "+" : ""}{unrealizedPercent.toFixed(2)}%)
+              </span>
+              <span className="text-[10px] text-zinc-500">
+                (@ ${currentPrice.toLocaleString(undefined, { minimumFractionDigits: 2 })})
+              </span>
+            </div>
           )}
         </div>
 

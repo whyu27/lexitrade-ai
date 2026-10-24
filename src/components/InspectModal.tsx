@@ -73,7 +73,14 @@ export function InspectModal({ analysisId, onClose }: InspectModalProps) {
             <VerificationCard analysis={data.analysis} evidences={data.evidences} />
             <RegulatoryCard analysis={data.analysis} />
             {data.decision && <DecisionCard decision={data.decision} />}
-            {data.paperTrade && <PaperTradeCard trade={data.paperTrade} />}
+            {data.paperTrade && (
+              <PaperTradeCard
+                trade={data.paperTrade}
+                currentPrice={
+                  data.evidences.find((e) => e.type === "MARKET_OBSERVATION")?.payload?.price as number | undefined
+                }
+              />
+            )}
           </div>
         ) : (
           <p className="py-8 text-center text-xs text-zinc-500">Record not found in database.</p>

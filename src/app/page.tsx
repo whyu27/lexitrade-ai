@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { Navbar } from "@/components/Navbar";
+import { PortfolioSummary } from "@/components/PortfolioSummary";
 import { AnalysisForm } from "@/components/AnalysisForm";
 import { VerificationCard } from "@/components/VerificationCard";
 import { RegulatoryCard } from "@/components/RegulatoryCard";
@@ -35,6 +36,7 @@ export default function HomePage() {
   const [currentResult, setCurrentResult] = useState<PipelineResult | null>(null);
   const [analysesList, setAnalysesList] = useState<Analysis[]>([]);
   const [tradesList, setTradesList] = useState<PaperTrade[]>([]);
+  const [livePrices, setLivePrices] = useState<Record<string, number>>({});
   const [inspectId, setInspectId] = useState<string | null>(null);
   const [globalError, setGlobalError] = useState<string | null>(null);
 
@@ -61,6 +63,36 @@ export default function HomePage() {
     loadHistoricalData();
   }, []);
 
+  // Poll live spot price for open assets
+  useEffect(() => {
+    const openAssets = Array.from(
+      new Set(tradesList.filter((t) => t.status === "OPEN").map((t) => t.asset))
+    );
+
+    if (openAssets.length === 0) return;
+
+    const fetchPrices = async () => {
+      for (const asset of openAssets) {
+        try {
+          const res = await fetch(`/api/market/${asset}?allowStale=true`);
+          const json = await res.json();
+          if (json.success && json.data?.price) {
+            setLivePrices((prev) => ({
+              ...prev,
+              [asset]: json.data.price,
+            }));
+          }
+        } catch (e) {
+          console.error(`Failed to fetch live price for ${asset}:`, e);
+        }
+      }
+    };
+
+    fetchPrices();
+    const interval = setInterval(fetchPrices, 4000);
+    return () => clearInterval(interval);
+  }, [tradesList]);
+
   const handleAnalyze = async (claim: string, sourceUrl: string, targetAsset: string) => {
     setIsLoading(true);
     setGlobalError(null);
@@ -78,6 +110,12 @@ export default function HomePage() {
       }
 
       setCurrentResult(json.data);
+      if (json.data.marketObservation?.price) {
+        setLivePrices((prev) => ({
+          ...prev,
+          [json.data.primaryAsset]: json.data.marketObservation.price,
+        }));
+      }
       setActiveTab("dashboard");
       await loadHistoricalData();
     } catch (err: unknown) {
@@ -108,7 +146,28 @@ export default function HomePage() {
     }
   };
 
+  const handleResetPortfolio = async () => {
+    try {
+      const res = await fetch("/api/trades/reset", { method: "POST" });
+      const json = await res.json();
+      if (json.success) {
+        if (currentResult) {
+          setCurrentResult({
+            ...currentResult,
+            paperTrade: null,
+          });
+        }
+        await loadHistoricalData();
+      }
+    } catch (e) {
+      console.error("Failed to reset portfolio:", e);
+    }
+  };
+
   const openTradesCount = tradesList.filter((t) => t.status === "OPEN").length;
+  const currentAssetPrice = currentResult?.primaryAsset
+    ? (livePrices[currentResult.primaryAsset] || currentResult.marketObservation?.price)
+    : undefined;
 
   return (
     <div className="min-h-screen flex flex-col bg-zinc-950 text-zinc-100 font-sans selection:bg-zinc-800">
@@ -119,10 +178,10 @@ export default function HomePage() {
         openTradesCount={openTradesCount}
       />
 
-      <main className="flex-1 mx-auto w-full max-w-7xl px-4 py-4 sm:px-6">
+      <main className="flex-1 mx-auto w-full max-w-7xl px-4 py-4 sm:px-6 space-y-4">
         {/* Global Error Alert */}
         {globalError && (
-          <div className="mb-4 flex items-center justify-between rounded border border-rose-900/50 bg-rose-950/20 px-3.5 py-2 font-mono text-xs text-rose-300">
+          <div className="flex items-center justify-between rounded border border-rose-900/50 bg-rose-950/20 px-3.5 py-2 font-mono text-xs text-rose-300">
             <div className="flex items-center gap-2">
               <AlertCircle className="h-4 w-4 shrink-0 text-rose-400" />
               <span>ERROR: {globalError}</span>
@@ -135,6 +194,13 @@ export default function HomePage() {
             </button>
           </div>
         )}
+
+        {/* Dynamic Simulation Portfolio & Balance Strip */}
+        <PortfolioSummary
+          trades={tradesList}
+          livePrices={livePrices}
+          onResetPortfolio={handleResetPortfolio}
+        />
 
         {/* Terminal Workspace Tab */}
         {activeTab === "dashboard" && (
@@ -169,6 +235,7 @@ export default function HomePage() {
                     {currentResult.paperTrade && (
                       <PaperTradeCard
                         trade={currentResult.paperTrade}
+                        currentPrice={currentAssetPrice}
                         onCloseTrade={handleCloseTrade}
                       />
                     )}

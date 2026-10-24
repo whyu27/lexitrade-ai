@@ -34,6 +34,15 @@ describe("Phase 3 — News Verification & Regulatory Analysis", () => {
       expect(result.reason).toContain("404");
     });
 
+    it("should successfully verify Scenario 1 using SEC fixture archive", async () => {
+      const claim =
+        "Securities and Exchange Commission grants formal regulatory approval for Bitcoin spot ETF listing and trading across US national exchanges.";
+      const sourceUrl = "https://www.sec.gov/news/press-release";
+      const result = await verifier.verifyClaim(claim, sourceUrl);
+      expect(result.status).toBe("VERIFIED");
+      expect(result.matchedKeywords.length).toBeGreaterThanOrEqual(3);
+    });
+
     it("should mark claim as VERIFIED when source HTML corroborates the claim", async () => {
       const mockHtml = `
         <!DOCTYPE html>

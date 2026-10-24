@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Database, FileText } from "lucide-react";
 import type { Analysis, PaperTrade } from "@/lib/schemas";
 
@@ -81,7 +81,7 @@ export function AnalysesLedgerView({
                 <td className="py-2.5 text-right">
                   <button
                     type="button"
-                    className="rounded border border-zinc-700 bg-zinc-800 px-2 py-0.5 text-[10px] text-zinc-300 hover:text-white"
+                    className="rounded border border-zinc-700 bg-zinc-800 px-2 py-0.5 text-[10px] text-zinc-300 hover:text-white cursor-pointer"
                   >
                     INSPECT
                   </button>
@@ -104,6 +104,38 @@ export function TradesHistoryView({
   trades,
   onCloseTrade,
 }: TradesHistoryViewProps) {
+  const [livePrices, setLivePrices] = useState<Record<string, number>>({});
+
+  // Poll live spot price for any open asset
+  useEffect(() => {
+    const openAssets = Array.from(
+      new Set(trades.filter((t) => t.status === "OPEN").map((t) => t.asset))
+    );
+
+    if (openAssets.length === 0) return;
+
+    const fetchPrices = async () => {
+      for (const asset of openAssets) {
+        try {
+          const res = await fetch(`/api/market/${asset}?allowStale=true`);
+          const json = await res.json();
+          if (json.success && json.data?.price) {
+            setLivePrices((prev) => ({
+              ...prev,
+              [asset]: json.data.price,
+            }));
+          }
+        } catch (e) {
+          console.error(`Failed to fetch live price for ${asset}:`, e);
+        }
+      }
+    };
+
+    fetchPrices();
+    const interval = setInterval(fetchPrices, 4000);
+    return () => clearInterval(interval);
+  }, [trades]);
+
   if (trades.length === 0) {
     return (
       <div className="rounded border border-zinc-800 bg-zinc-900/40 p-8 text-center font-mono text-xs text-zinc-500">
@@ -138,14 +170,31 @@ export function TradesHistoryView({
               <th className="pb-2">Stop-Loss</th>
               <th className="pb-2">Take-Profit</th>
               <th className="pb-2">Status</th>
-              <th className="pb-2">Realized PnL</th>
+              <th className="pb-2">P&L (Live / Realized)</th>
               <th className="pb-2 text-right">Action</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-zinc-800/60">
             {trades.map((t) => {
-              const pnl = t.pnl ?? 0;
-              const isPositive = pnl >= 0;
+              const isOpen = t.status === "OPEN";
+              const currentPrice = livePrices[t.asset] || t.entryPrice;
+              
+              // If closed, use stored realized PnL; if open, calculate dynamic unrealized PnL
+              let pnl = 0;
+              let pnlPercent = 0;
+              let isPositive = false;
+
+              if (isOpen) {
+                const diff = currentPrice - t.entryPrice;
+                pnl = Number((diff * t.positionSize).toFixed(2));
+                pnlPercent = t.entryPrice > 0 ? (diff / t.entryPrice) * 100 : 0;
+                isPositive = pnl >= 0;
+              } else {
+                pnl = t.pnl ?? 0;
+                pnlPercent = t.entryPrice > 0 ? (pnl / (t.entryPrice * t.positionSize)) * 100 : 0;
+                isPositive = pnl >= 0;
+              }
+
               return (
                 <tr key={t.id} className="hover:bg-zinc-850/40">
                   <td className="py-2.5 text-zinc-400 font-mono text-[10px]">
@@ -155,14 +204,20 @@ export function TradesHistoryView({
                     {t.direction} {t.asset}
                   </td>
                   <td className="py-2.5 text-zinc-300">{t.positionSize}</td>
-                  <td className="py-2.5 text-zinc-300">${t.entryPrice.toLocaleString()}</td>
-                  <td className="py-2.5 text-rose-400">${t.stopLoss.toLocaleString()}</td>
-                  <td className="py-2.5 text-emerald-400">${t.takeProfit.toLocaleString()}</td>
+                  <td className="py-2.5 text-zinc-300">
+                    ${t.entryPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </td>
+                  <td className="py-2.5 text-rose-400">
+                    ${t.stopLoss.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </td>
+                  <td className="py-2.5 text-emerald-400">
+                    ${t.takeProfit.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </td>
                   <td className="py-2.5">
                     <span
                       className={`rounded px-1.5 py-0.2 text-[10px] font-bold border ${
-                        t.status === "OPEN"
-                          ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-400"
+                        isOpen
+                          ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-400 animate-pulse"
                           : "border-zinc-700 bg-zinc-800 text-zinc-400"
                       }`}
                     >
@@ -170,19 +225,29 @@ export function TradesHistoryView({
                     </span>
                   </td>
                   <td className="py-2.5 font-bold">
-                    {t.status === "CLOSED" ? (
-                      <span className={isPositive ? "text-emerald-400" : "text-rose-400"}>
-                        {isPositive ? "+" : ""}${pnl.toFixed(2)}
-                      </span>
+                    {isOpen ? (
+                      <div className="flex flex-col">
+                        <span className={isPositive ? "text-emerald-400" : "text-rose-400"}>
+                          {isPositive ? "+" : ""}${pnl.toFixed(2)}
+                        </span>
+                        <span className="text-[9px] text-zinc-500 font-normal">
+                          {isPositive ? "+" : ""}{pnlPercent.toFixed(2)}% (UNREALIZED)
+                        </span>
+                      </div>
                     ) : (
-                      <span className="text-zinc-500 font-normal">UNREALIZED</span>
+                      <div className="flex flex-col">
+                        <span className={isPositive ? "text-emerald-400" : "text-rose-400"}>
+                          {isPositive ? "+" : ""}${pnl.toFixed(2)}
+                        </span>
+                        <span className="text-[9px] text-zinc-500 font-normal">REALIZED</span>
+                      </div>
                     )}
                   </td>
                   <td className="py-2.5 text-right">
-                    {t.status === "OPEN" && onCloseTrade ? (
+                    {isOpen && onCloseTrade ? (
                       <button
                         onClick={() => onCloseTrade(t.id)}
-                        className="rounded border border-zinc-700 bg-zinc-800 px-2 py-0.5 text-[10px] font-semibold text-zinc-200 hover:bg-zinc-700 cursor-pointer"
+                        className="rounded border border-zinc-700 bg-zinc-800 px-2.5 py-1 text-[10px] font-semibold text-zinc-200 hover:bg-zinc-700 hover:text-white cursor-pointer"
                       >
                         CLOSE
                       </button>
