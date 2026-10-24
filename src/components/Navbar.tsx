@@ -8,6 +8,7 @@ interface NavbarProps {
   setActiveTab: (tab: "dashboard" | "analyses" | "trades") => void;
   analysisCount?: number;
   openTradesCount?: number;
+  onOpenSpecs?: () => void;
 }
 
 export function Navbar({
@@ -15,6 +16,7 @@ export function Navbar({
   setActiveTab,
   analysisCount = 0,
   openTradesCount = 0,
+  onOpenSpecs,
 }: NavbarProps) {
   return (
     <header className="border-b border-zinc-800 bg-zinc-950 text-xs">
@@ -68,10 +70,25 @@ export function Navbar({
           </button>
         </nav>
 
-        {/* Minimal Right Status */}
-        <div className="flex items-center gap-2 font-mono text-[11px] text-zinc-500">
-          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-          <span>Binance Spot</span>
+        {/* Minimal Right Status & Architecture Specs Button */}
+        <div className="flex items-center gap-2.5 font-mono text-[11px] text-zinc-500">
+          {onOpenSpecs && (
+            <button
+              onClick={onOpenSpecs}
+              type="button"
+              className="flex items-center gap-1.5 rounded border border-zinc-800 bg-zinc-900/90 px-2 py-1 text-zinc-300 hover:border-zinc-700 hover:text-white transition-colors cursor-pointer"
+              title="View Architecture & Bounty Track Specifications"
+            >
+              <span className="text-emerald-400 font-bold">ℹ</span>
+              <span className="hidden sm:inline">Specs & Architecture</span>
+              <span className="sm:hidden">Specs</span>
+            </button>
+          )}
+          <div className="h-3 w-px bg-zinc-800 hidden sm:block" />
+          <div className="hidden sm:flex items-center gap-1.5">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+            <span>Binance Spot</span>
+          </div>
         </div>
       </div>
     </header>

@@ -11,6 +11,7 @@ import { DecisionCard } from "@/components/DecisionCard";
 import { PaperTradeCard } from "@/components/PaperTradeCard";
 import { AnalysesLedgerView, TradesHistoryView } from "@/components/HistoryViews";
 import { InspectModal } from "@/components/InspectModal";
+import { ArchitectureModal } from "@/components/ArchitectureModal";
 import type {
   Analysis,
   Evidence,
@@ -38,6 +39,7 @@ export default function HomePage() {
   const [tradesList, setTradesList] = useState<PaperTrade[]>([]);
   const [livePrices, setLivePrices] = useState<Record<string, number>>({});
   const [inspectId, setInspectId] = useState<string | null>(null);
+  const [showSpecs, setShowSpecs] = useState(false);
   const [globalError, setGlobalError] = useState<string | null>(null);
 
   const loadHistoricalData = async () => {
@@ -176,6 +178,7 @@ export default function HomePage() {
         setActiveTab={setActiveTab}
         analysisCount={analysesList.length}
         openTradesCount={openTradesCount}
+        onOpenSpecs={() => setShowSpecs(true)}
       />
 
       <main className="flex-1 mx-auto w-full max-w-7xl px-4 py-4 sm:px-6 space-y-4">
@@ -198,6 +201,22 @@ export default function HomePage() {
         {/* Terminal Workspace Tab */}
         {activeTab === "dashboard" && (
           <div className="space-y-4">
+            {/* Hackathon Bounty Context Header Banner */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 rounded border border-zinc-800/80 bg-zinc-900/20 px-3.5 py-2">
+              <div className="flex items-center gap-2 font-mono text-[11px] text-zinc-400">
+                <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="text-zinc-200 font-semibold">AUTONOMOUS REGULATORY TRADING PIPELINE</span>
+                <span className="text-zinc-600 hidden sm:inline">•</span>
+                <span className="text-zinc-500 hidden sm:inline">BLI Legal Tech Hackathon 2 (RYO-CHAN Track)</span>
+              </div>
+              <button
+                onClick={() => setShowSpecs(true)}
+                className="self-start sm:self-auto font-mono text-[11px] text-emerald-400 hover:text-emerald-300 underline underline-offset-2 transition-colors cursor-pointer"
+              >
+                [View Architecture & Bounty Specs ↗]
+              </button>
+            </div>
+
             {/* Input Dispatcher */}
             <AnalysisForm onAnalyze={handleAnalyze} isLoading={isLoading} />
 
@@ -267,6 +286,12 @@ export default function HomePage() {
       <InspectModal
         analysisId={inspectId}
         onClose={() => setInspectId(null)}
+      />
+
+      {/* System Architecture & Bounty Specs Modal */}
+      <ArchitectureModal
+        isOpen={showSpecs}
+        onClose={() => setShowSpecs(false)}
       />
 
       {/* Terminal Footer */}
