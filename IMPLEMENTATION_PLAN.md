@@ -80,21 +80,24 @@ The application can retrieve actual market data from the selected provider and c
 ## Phase 3 — News Verification and Regulatory Analysis
 
 ### Tasks
-- [ ] Build the news-input interface.
-- [ ] Accept a claim and optional source URL.
-- [ ] Retrieve source content using a permitted and technically supported method.
-- [ ] Record source metadata and retrieval time.
-- [ ] Implement verification states: VERIFIED, UNVERIFIED, CONFLICTING, and UNAVAILABLE.
-- [ ] Identify relevant assets and regulatory context.
-- [ ] Produce structured sentiment, potential impact, uncertainty, and legal-risk assessments.
-- [ ] Separate source-backed facts from AI-generated interpretations.
-- [ ] Handle inaccessible pages and conflicting sources.
+- [x] Build the news-input interface (API routes `/api/analyze`, `/api/analyses`, `/api/analyses/[id]`).
+- [x] Accept a claim and optional source URL.
+- [x] Retrieve source content using a permitted and technically supported method (`NewsVerifier` with Cheerio).
+- [x] Record source metadata and retrieval time.
+- [x] Implement verification states: VERIFIED, UNVERIFIED, CONFLICTING, and UNAVAILABLE.
+- [x] Identify relevant assets and regulatory context.
+- [x] Produce structured sentiment, potential impact, uncertainty, and legal-risk assessments.
+- [x] Separate source-backed facts from AI-generated interpretations.
+- [x] Handle inaccessible pages and conflicting sources.
 
 ### Deliverables
-A structured news-analysis service with traceable evidence.
+- `NewsVerifier` engine with automated HTML scraping, conflict polarity detection, and explicit verification statuses (`VERIFIED`, `UNVERIFIED`, `CONFLICTING`, `UNAVAILABLE`).
+- `RegulatoryAnalyzer` supporting dual modes: deterministic heuristic NLP rule engine (zero-dependency, offline-ready) and LLM-structured JSON generation (Gemini / OpenAI).
+- Endpoints: `POST /api/analyze`, `GET /api/analyses`, and `GET /api/analyses/[id]`.
+- Full test suite in `tests/verification-analysis.test.ts` verifying all 4 verification states, conflict detection, entity resolution, and sentiment analysis.
 
 ### Exit Criteria
-The application does not mark a claim as verified based solely on an LLM's assertion.
+The application does not mark a claim as verified based solely on an LLM's assertion. — **COMPLETED**
 
 ## Phase 4 — Deterministic Decision Engine
 
