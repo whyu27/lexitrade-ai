@@ -7,7 +7,7 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?style=flat&logo=typescript)](https://www.typescriptlang.org/)
 [![Tailwind CSS](https://img.shields.io/badge/TailwindCSS-v4-38bdf8?style=flat&logo=tailwindcss)](https://tailwindcss.com/)
 [![SQLite](https://img.shields.io/badge/Database-SQLite%20(LibSQL)-003B57?style=flat&logo=sqlite)](https://sqlite.org/)
-[![Vitest](https://img.shields.io/badge/Tests-32%20Passed-brightgreen?style=flat&logo=vitest)](https://vitest.dev/)
+[![Vitest](https://img.shields.io/badge/Tests-33%20Passed-brightgreen?style=flat&logo=vitest)](https://vitest.dev/)
 
 ---
 
@@ -102,7 +102,7 @@ npm install
 # 3. Configure environment
 cp .env.example .env.local
 
-# 4. Run test suite (32 unit & E2E tests)
+# 4. Run test suite (33 unit & E2E tests)
 npm test
 
 # 5. Start development server
@@ -139,6 +139,7 @@ The dashboard provides 3 interactive 1-click presets demonstrating the full auto
 | `GET` | `/api/market/[asset]` | Returns verified market observation for asset (`BTC`, `ETH`, `SOL`, etc.) |
 | `GET` | `/api/trades` | Returns paper trading history and active positions |
 | `POST` | `/api/trades/[id]/close` | Closes active paper trade with realized P/L calculation |
+| `POST` | `/api/trades/reset` | Resets simulated paper portfolio to clean $100,000 baseline |
 | `GET` | `/api/health` | Service health status and database connectivity check |
 
 ---
