@@ -59,20 +59,23 @@ The project has at least one tested way to retrieve traceable market evidence an
 ## Phase 2 — Market Evidence Integration
 
 ### Tasks
-- [ ] Implement a market-data adapter.
-- [ ] Retrieve supported market observations for a selected asset.
-- [ ] Normalize provider responses into an internal schema.
-- [ ] Record provider name, observation timestamp, and retrieval timestamp.
-- [ ] Validate prices and other numeric values.
-- [ ] Handle timeouts, rate limits, and missing data.
-- [ ] Implement a configurable freshness threshold.
-- [ ] Add tests using recorded sample responses.
+- [x] Implement a market-data adapter.
+- [x] Retrieve supported market observations for a selected asset.
+- [x] Normalize provider responses into an internal schema.
+- [x] Record provider name, observation timestamp, and retrieval timestamp.
+- [x] Validate prices and other numeric values.
+- [x] Handle timeouts, rate limits, and missing data.
+- [x] Implement a configurable freshness threshold.
+- [x] Add tests using recorded sample responses and real live fetch.
 
 ### Deliverables
-A reliable market-evidence service that returns traceable observations.
+- Modular market provider adapters: `BinanceAdapter` (primary spot) and `CoinPaprikaAdapter` (fallback).
+- `MarketDataService` with automatic fallback, strict positive price validation, and freshness threshold checks.
+- API route `GET /api/market/[asset]` with support for `maxAgeSec` and `allowStale` query params.
+- Full test suite in `tests/market.test.ts` verifying normalization, stale data rejection, fallback, and live Binance Spot retrieval.
 
 ### Exit Criteria
-The application can retrieve actual market data from the selected provider and correctly reject invalid or stale observations.
+The application can retrieve actual market data from the selected provider and correctly reject invalid or stale observations. — **COMPLETED**
 
 ## Phase 3 — News Verification and Regulatory Analysis
 
