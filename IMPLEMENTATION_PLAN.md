@@ -164,18 +164,20 @@ A reviewer can trace a simulated trade back to its news claim, market observatio
 ## Phase 7 — Dashboard
 
 ### Tasks
-- [ ] Build the main dashboard.
-- [ ] Add the news-analysis input form.
-- [ ] Display verification status and source references.
-- [ ] Display market observations and timestamps.
-- [ ] Display sentiment, uncertainty, and potential impact.
-- [ ] Display the final decision and rule results.
-- [ ] Display paper-trade parameters and current status.
-- [ ] Build analysis-history and trade-history views.
-- [ ] Add clear loading, error, and empty states.
+- [x] Build the main dashboard layout and responsive navigation.
+- [x] Add the news-analysis input form with 3 interactive demo presets.
+- [x] Display verification status and source references (`VerificationCard`).
+- [x] Display market observations and timestamps (`MarketCard`).
+- [x] Display sentiment, uncertainty, and potential impact (`RegulatoryCard`).
+- [x] Display the final decision and rule results checklist (`DecisionCard`).
+- [x] Display paper-trade parameters and current status (`PaperTradeCard`).
+- [x] Build analysis-history and trade-history views (`AnalysesLedgerView`, `TradesHistoryView`, `InspectModal`).
+- [x] Add clear loading, error, and empty states.
 
 ### Deliverables
-A usable interface that demonstrates the complete workflow.
+- Full interactive web interface matching Web3/FinTech aesthetic.
+- One-click testing presets covering both valid `BUY` and safety-triggered `NO TRADE` scenarios.
+- Live inspection modal linking back to persistent SQLite evidence.
 
 ## Phase 8 — Testing and Hardening
 
