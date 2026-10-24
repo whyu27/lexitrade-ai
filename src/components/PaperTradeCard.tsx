@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { DollarSign, Shield, Target, ArrowUpRight, CheckCircle2, Lock } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
 import type { PaperTrade } from "@/lib/schemas";
 
 interface PaperTradeCardProps {
@@ -27,82 +27,84 @@ export function PaperTradeCard({ trade, onCloseTrade }: PaperTradeCardProps) {
   const isPnlPositive = pnl >= 0;
 
   return (
-    <div className="rounded-2xl border border-cyan-500/30 bg-gradient-to-br from-cyan-950/20 via-slate-900/40 to-slate-950 p-5 shadow-xl backdrop-blur-sm">
-      <div className="mb-3 flex items-center justify-between border-b border-slate-800 pb-2.5">
+    <div className="rounded border border-zinc-700 bg-zinc-900/60 p-4 font-mono text-xs">
+      <div className="mb-3 flex items-center justify-between border-b border-zinc-800 pb-2">
         <div className="flex items-center gap-2">
-          <span className="text-xs font-semibold text-cyan-300 uppercase tracking-wider">
-            5. Simulated Practice Trade (Paper Execution)
+          <span className="font-semibold text-zinc-200">
+            [PRACTICE ORDER TICKET]
           </span>
-          <span className="rounded bg-cyan-500/10 border border-cyan-500/30 px-2 py-0.5 text-[10px] font-mono text-cyan-300">
+          <span className="text-zinc-500 text-[11px]">
+            REF: {trade.id}
+          </span>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <span className="rounded border border-cyan-500/30 bg-cyan-500/10 px-2 py-0.5 text-[10px] font-bold text-cyan-400">
             {trade.direction} {trade.asset}
           </span>
+          <span
+            className={`rounded border px-2 py-0.5 text-[10px] font-bold ${
+              isOpen
+                ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-400"
+                : "border-zinc-700 bg-zinc-800 text-zinc-400"
+            }`}
+          >
+            {trade.status}
+          </span>
         </div>
-
-        <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold border ${
-          isOpen
-            ? "border-emerald-500/40 bg-emerald-500/20 text-emerald-300 animate-pulse"
-            : "border-slate-700 bg-slate-800 text-slate-400"
-        }`}>
-          {trade.status}
-        </span>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 text-xs mb-4">
-        <div className="rounded-xl border border-slate-800/80 bg-slate-950/70 p-2.5">
-          <span className="text-[10px] font-medium text-slate-500 uppercase">Entry Price</span>
-          <p className="text-base font-bold font-mono text-slate-100">
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 mb-3">
+        <div className="rounded border border-zinc-800 bg-zinc-950 p-2">
+          <span className="text-[10px] text-zinc-500 block uppercase">Entry Fill</span>
+          <span className="text-xs font-bold text-zinc-200">
             ${trade.entryPrice.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-          </p>
-          <span className="text-[10px] text-slate-400">Executed at live spot</span>
+          </span>
         </div>
 
-        <div className="rounded-xl border border-slate-800/80 bg-slate-950/70 p-2.5">
-          <span className="text-[10px] font-medium text-slate-500 uppercase">Position Size</span>
-          <p className="text-base font-bold font-mono text-slate-100">
+        <div className="rounded border border-zinc-800 bg-zinc-950 p-2">
+          <span className="text-[10px] text-zinc-500 block uppercase">Position Size</span>
+          <span className="text-xs font-bold text-zinc-200">
             {trade.positionSize} {trade.asset}
-          </p>
-          <span className="text-[10px] text-slate-400">
-            ~${Math.round(trade.positionSize * trade.entryPrice).toLocaleString()} USD
+          </span>
+          <span className="text-[10px] text-zinc-500 block">
+            ~${Math.round(trade.positionSize * trade.entryPrice).toLocaleString()}
           </span>
         </div>
 
-        <div className="rounded-xl border border-rose-900/30 bg-slate-950/70 p-2.5">
-          <span className="flex items-center gap-1 text-[10px] font-medium text-rose-400 uppercase">
-            <Shield className="h-3 w-3" /> Stop-Loss (-3%)
-          </span>
-          <p className="text-base font-bold font-mono text-rose-400">
+        <div className="rounded border border-zinc-800 bg-zinc-950 p-2">
+          <span className="text-[10px] text-rose-400 block uppercase">Stop-Loss (-3%)</span>
+          <span className="text-xs font-bold text-rose-400">
             ${trade.stopLoss.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-          </p>
-          <span className="text-[10px] text-slate-500">Automated Exit Floor</span>
+          </span>
         </div>
 
-        <div className="rounded-xl border border-emerald-900/30 bg-slate-950/70 p-2.5">
-          <span className="flex items-center gap-1 text-[10px] font-medium text-emerald-400 uppercase">
-            <Target className="h-3 w-3" /> Take-Profit (+6%)
-          </span>
-          <p className="text-base font-bold font-mono text-emerald-400">
+        <div className="rounded border border-zinc-800 bg-zinc-950 p-2">
+          <span className="text-[10px] text-emerald-400 block uppercase">Take-Profit (+6%)</span>
+          <span className="text-xs font-bold text-emerald-400">
             ${trade.takeProfit.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-          </p>
-          <span className="text-[10px] text-slate-500">Target Exit Ceiling</span>
+          </span>
         </div>
       </div>
 
-      {/* Outcome / Actions */}
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-800/80 bg-slate-950/50 p-3">
-        <div className="flex items-center gap-3 text-xs">
-          <div className="flex items-center gap-1.5 text-slate-400">
-            <Lock className="h-3.5 w-3.5 text-slate-500" />
-            <span>Audit Ref:</span>
-            <span className="font-mono text-slate-300">{trade.id}</span>
-          </div>
-
+      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-zinc-800 pt-2 text-[11px]">
+        <div>
           {!isOpen && (
             <div className="flex items-center gap-1.5">
-              <span className="text-slate-400">Realized PnL:</span>
-              <span className={`font-mono font-bold ${isPnlPositive ? "text-emerald-400" : "text-rose-400"}`}>
-                {isPnlPositive ? "+" : ""}${pnl.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+              <span className="text-zinc-500">REALIZED P&L:</span>
+              <span
+                className={`font-bold ${
+                  isPnlPositive ? "text-emerald-400" : "text-rose-400"
+                }`}
+              >
+                {isPnlPositive ? "+" : ""}${pnl.toFixed(2)} USD
               </span>
             </div>
+          )}
+          {isOpen && (
+            <span className="text-zinc-500 text-[10px]">
+              Active practice trade • Stop-loss & take-profit monitored against feed
+            </span>
           )}
         </div>
 
@@ -111,14 +113,14 @@ export function PaperTradeCard({ trade, onCloseTrade }: PaperTradeCardProps) {
             type="button"
             onClick={handleClose}
             disabled={isClosing}
-            className="flex items-center gap-1.5 rounded-lg border border-cyan-500/40 bg-cyan-500/10 px-3 py-1.5 text-xs font-semibold text-cyan-300 transition-all hover:bg-cyan-500/20 disabled:opacity-50"
+            className="flex items-center gap-1.5 rounded border border-zinc-700 bg-zinc-800 px-3 py-1 text-xs font-semibold text-zinc-200 transition-colors hover:bg-zinc-700 hover:text-white disabled:opacity-50 cursor-pointer"
           >
             {isClosing ? (
-              <span>Closing Position...</span>
+              <span>CLOSING ORDER...</span>
             ) : (
               <>
                 <ArrowUpRight className="h-3.5 w-3.5" />
-                <span>Close Position (Simulated Market Fill)</span>
+                <span>CLOSE POSITION (MARKET EXIT)</span>
               </>
             )}
           </button>

@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { History, BookOpen, ExternalLink, ArrowUpRight } from "lucide-react";
+import { Database, FileText } from "lucide-react";
 import type { Analysis, PaperTrade } from "@/lib/schemas";
 
 interface AnalysesLedgerViewProps {
@@ -15,80 +15,81 @@ export function AnalysesLedgerView({
 }: AnalysesLedgerViewProps) {
   if (analyses.length === 0) {
     return (
-      <div className="rounded-2xl border border-slate-800 bg-slate-900/40 p-8 text-center">
-        <History className="mx-auto h-8 w-8 text-slate-600 mb-2" />
-        <h3 className="text-sm font-semibold text-slate-300">No Analyses Recorded Yet</h3>
-        <p className="text-xs text-slate-500 mt-1">
-          Submit a regulatory news claim in the agent dashboard to create your first auditable record.
-        </p>
+      <div className="rounded border border-zinc-800 bg-zinc-900/40 p-8 text-center font-mono text-xs text-zinc-500">
+        <Database className="mx-auto h-6 w-6 text-zinc-600 mb-2" />
+        <p>NO AUDIT RECORDS FOUND IN DATABASE</p>
+        <p className="text-[11px] text-zinc-600 mt-1">Submit a claim to generate an auditable record trail.</p>
       </div>
     );
   }
 
   return (
-    <div className="rounded-2xl border border-slate-800 bg-slate-900/40 p-5 backdrop-blur-sm">
-      <div className="mb-4 flex items-center justify-between border-b border-slate-800 pb-3">
-        <div className="flex items-center gap-2">
-          <History className="h-4 w-4 text-emerald-400" />
-          <h3 className="text-sm font-semibold text-slate-100 uppercase tracking-wider">
-            Persistent Regulatory News & Analysis Ledger
-          </h3>
-        </div>
-        <span className="text-xs text-slate-400 font-mono">
-          {analyses.length} Total Records
+    <div className="rounded border border-zinc-800 bg-zinc-900/40 p-4 font-mono text-xs">
+      <div className="mb-3 flex items-center justify-between border-b border-zinc-800 pb-2">
+        <span className="font-semibold text-zinc-200">
+          [PERMANENT COMPLIANCE & DECISION LEDGER]
+        </span>
+        <span className="text-[11px] text-zinc-500">
+          COUNT: {analyses.length} ENTRIES
         </span>
       </div>
 
-      <div className="divide-y divide-slate-800/80">
-        {analyses.map((item) => (
-          <div
-            key={item.id}
-            onClick={() => onSelectAnalysis(item.id)}
-            className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 py-3.5 transition-colors hover:bg-slate-850/40 cursor-pointer rounded-lg px-2 -mx-2"
-          >
-            <div className="space-y-1 min-w-0 max-w-xl">
-              <div className="flex items-center gap-2">
-                <span className="font-mono text-xs font-bold text-slate-400">
-                  [{item.affectedAssets.join(", ") || "BTC"}]
-                </span>
-                <span className={`rounded-full px-2 py-0.2 text-[10px] font-bold border ${
-                  item.verificationStatus === "VERIFIED"
-                    ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-400"
-                    : item.verificationStatus === "CONFLICTING"
-                    ? "border-rose-500/30 bg-rose-500/10 text-rose-400"
-                    : "border-amber-500/30 bg-amber-500/10 text-amber-400"
-                }`}>
-                  {item.verificationStatus}
-                </span>
-                <span className="text-[10px] text-slate-500">
-                  {new Date(item.createdAt).toLocaleString()}
-                </span>
-              </div>
-              <p className="text-xs text-slate-200 line-clamp-1 font-medium">
-                {item.claim}
-              </p>
-            </div>
-
-            <div className="flex items-center gap-2 shrink-0">
-              <span className={`rounded px-2 py-0.5 text-[10px] font-semibold ${
-                item.sentiment === "BULLISH"
-                  ? "bg-emerald-500/20 text-emerald-300"
-                  : item.sentiment === "BEARISH"
-                  ? "bg-rose-500/20 text-rose-300"
-                  : "bg-slate-800 text-slate-400"
-              }`}>
-                {item.sentiment}
-              </span>
-              <button
-                type="button"
-                className="flex items-center gap-1 rounded-lg border border-slate-700 bg-slate-800 px-2.5 py-1 text-xs text-slate-300 hover:text-white hover:border-slate-600"
+      <div className="overflow-x-auto">
+        <table className="w-full text-left font-mono text-[11px]">
+          <thead>
+            <tr className="border-b border-zinc-800 text-[10px] text-zinc-500 uppercase">
+              <th className="pb-2 w-36">Timestamp (UTC)</th>
+              <th className="pb-2 w-16">Asset</th>
+              <th className="pb-2 w-28">Status</th>
+              <th className="pb-2 w-24">Sentiment</th>
+              <th className="pb-2">Claim Headline</th>
+              <th className="pb-2 text-right w-20">Audit</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-zinc-800/60">
+            {analyses.map((item) => (
+              <tr
+                key={item.id}
+                onClick={() => onSelectAnalysis(item.id)}
+                className="hover:bg-zinc-850/40 cursor-pointer"
               >
-                <span>Inspect</span>
-                <ExternalLink className="h-3 w-3" />
-              </button>
-            </div>
-          </div>
-        ))}
+                <td className="py-2.5 text-zinc-400">
+                  {new Date(item.createdAt).toISOString().replace("T", " ").substring(0, 19)}
+                </td>
+                <td className="py-2.5 font-bold text-zinc-200">
+                  {item.affectedAssets.join(",") || "BTC"}
+                </td>
+                <td className="py-2.5">
+                  <span
+                    className={`rounded px-1.5 py-0.2 text-[10px] font-bold border ${
+                      item.verificationStatus === "VERIFIED"
+                        ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-400"
+                        : item.verificationStatus === "CONFLICTING"
+                        ? "border-rose-500/30 bg-rose-500/10 text-rose-400"
+                        : "border-amber-500/30 bg-amber-500/10 text-amber-400"
+                    }`}
+                  >
+                    {item.verificationStatus}
+                  </span>
+                </td>
+                <td className="py-2.5 text-zinc-300">
+                  {item.sentiment}
+                </td>
+                <td className="py-2.5 text-zinc-300 font-sans text-xs truncate max-w-md pr-4">
+                  {item.claim}
+                </td>
+                <td className="py-2.5 text-right">
+                  <button
+                    type="button"
+                    className="rounded border border-zinc-700 bg-zinc-800 px-2 py-0.5 text-[10px] text-zinc-300 hover:text-white"
+                  >
+                    INSPECT
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );
@@ -105,85 +106,88 @@ export function TradesHistoryView({
 }: TradesHistoryViewProps) {
   if (trades.length === 0) {
     return (
-      <div className="rounded-2xl border border-slate-800 bg-slate-900/40 p-8 text-center">
-        <BookOpen className="mx-auto h-8 w-8 text-slate-600 mb-2" />
-        <h3 className="text-sm font-semibold text-slate-300">No Paper Trades Opened Yet</h3>
-        <p className="text-xs text-slate-500 mt-1">
-          Simulated paper trades are executed automatically when an eligible claim satisfies all 6 deterministic rules.
+      <div className="rounded border border-zinc-800 bg-zinc-900/40 p-8 text-center font-mono text-xs text-zinc-500">
+        <FileText className="mx-auto h-6 w-6 text-zinc-600 mb-2" />
+        <p>NO SIMULATED POSITIONS OPENED</p>
+        <p className="text-[11px] text-zinc-600 mt-1">
+          Positions are triggered only when verified evidence passes all 6 deterministic rules.
         </p>
       </div>
     );
   }
 
   return (
-    <div className="rounded-2xl border border-slate-800 bg-slate-900/40 p-5 backdrop-blur-sm">
-      <div className="mb-4 flex items-center justify-between border-b border-slate-800 pb-3">
-        <div className="flex items-center gap-2">
-          <BookOpen className="h-4 w-4 text-cyan-400" />
-          <h3 className="text-sm font-semibold text-slate-100 uppercase tracking-wider">
-            Simulated Paper Positions & Practice Trades
-          </h3>
-        </div>
-        <span className="text-xs text-slate-400 font-mono">
-          {trades.length} Positions
+    <div className="rounded border border-zinc-800 bg-zinc-900/40 p-4 font-mono text-xs">
+      <div className="mb-3 flex items-center justify-between border-b border-zinc-800 pb-2">
+        <span className="font-semibold text-zinc-200">
+          [SIMULATED PRACTICE POSITIONS LEDGER]
+        </span>
+        <span className="text-[11px] text-zinc-500">
+          COUNT: {trades.length} POSITIONS
         </span>
       </div>
 
       <div className="overflow-x-auto">
-        <table className="w-full text-left text-xs">
-          <thead className="border-b border-slate-800 text-[10px] font-semibold text-slate-400 uppercase">
-            <tr>
-              <th className="pb-2.5">Asset / Dir</th>
-              <th className="pb-2.5">Size</th>
-              <th className="pb-2.5">Entry</th>
-              <th className="pb-2.5">Stop-Loss</th>
-              <th className="pb-2.5">Take-Profit</th>
-              <th className="pb-2.5">Status</th>
-              <th className="pb-2.5">Realized PnL</th>
-              <th className="pb-2.5 text-right">Action</th>
+        <table className="w-full text-left font-mono text-[11px]">
+          <thead>
+            <tr className="border-b border-zinc-800 text-[10px] text-zinc-500 uppercase">
+              <th className="pb-2">Position Ref</th>
+              <th className="pb-2">Instrument</th>
+              <th className="pb-2">Size</th>
+              <th className="pb-2">Entry Price</th>
+              <th className="pb-2">Stop-Loss</th>
+              <th className="pb-2">Take-Profit</th>
+              <th className="pb-2">Status</th>
+              <th className="pb-2">Realized PnL</th>
+              <th className="pb-2 text-right">Action</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-800/60 font-mono">
+          <tbody className="divide-y divide-zinc-800/60">
             {trades.map((t) => {
               const pnl = t.pnl ?? 0;
               const isPositive = pnl >= 0;
               return (
-                <tr key={t.id} className="hover:bg-slate-850/40">
-                  <td className="py-3 font-bold text-slate-200">
-                    {t.asset} <span className="text-cyan-400 text-[10px]">LONG</span>
+                <tr key={t.id} className="hover:bg-zinc-850/40">
+                  <td className="py-2.5 text-zinc-400 font-mono text-[10px]">
+                    {t.id}
                   </td>
-                  <td className="py-3 text-slate-300">{t.positionSize}</td>
-                  <td className="py-3 text-slate-300">${t.entryPrice.toLocaleString()}</td>
-                  <td className="py-3 text-rose-400">${t.stopLoss.toLocaleString()}</td>
-                  <td className="py-3 text-emerald-400">${t.takeProfit.toLocaleString()}</td>
-                  <td className="py-3">
-                    <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold border ${
-                      t.status === "OPEN"
-                        ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-400"
-                        : "border-slate-700 bg-slate-800 text-slate-400"
-                    }`}>
+                  <td className="py-2.5 font-bold text-zinc-200">
+                    {t.direction} {t.asset}
+                  </td>
+                  <td className="py-2.5 text-zinc-300">{t.positionSize}</td>
+                  <td className="py-2.5 text-zinc-300">${t.entryPrice.toLocaleString()}</td>
+                  <td className="py-2.5 text-rose-400">${t.stopLoss.toLocaleString()}</td>
+                  <td className="py-2.5 text-emerald-400">${t.takeProfit.toLocaleString()}</td>
+                  <td className="py-2.5">
+                    <span
+                      className={`rounded px-1.5 py-0.2 text-[10px] font-bold border ${
+                        t.status === "OPEN"
+                          ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-400"
+                          : "border-zinc-700 bg-zinc-800 text-zinc-400"
+                      }`}
+                    >
                       {t.status}
                     </span>
                   </td>
-                  <td className="py-3">
+                  <td className="py-2.5 font-bold">
                     {t.status === "CLOSED" ? (
                       <span className={isPositive ? "text-emerald-400" : "text-rose-400"}>
                         {isPositive ? "+" : ""}${pnl.toFixed(2)}
                       </span>
                     ) : (
-                      <span className="text-slate-500">Unrealized</span>
+                      <span className="text-zinc-500 font-normal">UNREALIZED</span>
                     )}
                   </td>
-                  <td className="py-3 text-right">
+                  <td className="py-2.5 text-right">
                     {t.status === "OPEN" && onCloseTrade ? (
                       <button
                         onClick={() => onCloseTrade(t.id)}
-                        className="rounded border border-cyan-500/30 bg-cyan-500/10 px-2 py-1 text-[11px] font-semibold text-cyan-300 hover:bg-cyan-500/20"
+                        className="rounded border border-zinc-700 bg-zinc-800 px-2 py-0.5 text-[10px] font-semibold text-zinc-200 hover:bg-zinc-700 cursor-pointer"
                       >
-                        Close
+                        CLOSE
                       </button>
                     ) : (
-                      <span className="text-slate-600 text-[11px]">Settled</span>
+                      <span className="text-zinc-600 text-[10px]">SETTLED</span>
                     )}
                   </td>
                 </tr>

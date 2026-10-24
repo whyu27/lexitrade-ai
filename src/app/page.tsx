@@ -17,7 +17,7 @@ import type {
   PaperTrade,
   MarketObservation,
 } from "@/lib/schemas";
-import { ShieldCheck, ArrowRight, BookOpen, AlertCircle } from "lucide-react";
+import { AlertCircle } from "lucide-react";
 
 interface PipelineResult {
   analysis: Analysis;
@@ -74,7 +74,7 @@ export default function HomePage() {
 
       const json = await res.json();
       if (!res.ok || !json.success) {
-        throw new Error(json.error || "Analysis pipeline execution failed");
+        throw new Error(json.error || "Pipeline execution failed");
       }
 
       setCurrentResult(json.data);
@@ -95,7 +95,6 @@ export default function HomePage() {
       });
       const json = await res.json();
       if (json.success) {
-        // Update current result if matching
         if (currentResult?.paperTrade?.id === tradeId) {
           setCurrentResult({
             ...currentResult,
@@ -112,7 +111,7 @@ export default function HomePage() {
   const openTradesCount = tradesList.filter((t) => t.status === "OPEN").length;
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-950 text-slate-100">
+    <div className="min-h-screen flex flex-col bg-zinc-950 text-zinc-100 font-sans selection:bg-zinc-800">
       <Navbar
         activeTab={activeTab}
         setActiveTab={setActiveTab}
@@ -120,99 +119,67 @@ export default function HomePage() {
         openTradesCount={openTradesCount}
       />
 
-      <main className="flex-1 mx-auto w-full max-w-7xl px-4 py-6 sm:px-6">
-        {/* Global Error Banner */}
+      <main className="flex-1 mx-auto w-full max-w-7xl px-4 py-4 sm:px-6">
+        {/* Global Error Alert */}
         {globalError && (
-          <div className="mb-6 flex items-center justify-between rounded-xl border border-rose-500/40 bg-rose-500/10 p-3.5 text-xs text-rose-300">
+          <div className="mb-4 flex items-center justify-between rounded border border-rose-900/50 bg-rose-950/20 px-3.5 py-2 font-mono text-xs text-rose-300">
             <div className="flex items-center gap-2">
               <AlertCircle className="h-4 w-4 shrink-0 text-rose-400" />
-              <span>{globalError}</span>
+              <span>ERROR: {globalError}</span>
             </div>
             <button
               onClick={() => setGlobalError(null)}
-              className="text-slate-400 hover:text-white"
+              className="text-zinc-500 hover:text-white"
             >
-              Dismiss
+              [DISMISS]
             </button>
           </div>
         )}
 
-        {/* Dashboard Tab */}
+        {/* Terminal Workspace Tab */}
         {activeTab === "dashboard" && (
-          <div className="space-y-6">
-            {/* Mission Banner */}
-            <div className="rounded-2xl border border-slate-800 bg-gradient-to-r from-slate-900/80 via-slate-900/40 to-slate-950 p-6 shadow-xl">
-              <div className="max-w-3xl space-y-2">
-                <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-300">
-                  <ShieldCheck className="h-3.5 w-3.5" />
-                  Autonomous Web3 Agent Architecture
-                </span>
-                <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-white">
-                  Regulatory News to Explainable Practice Trades
-                </h1>
-                <p className="text-xs sm:text-sm text-slate-400 leading-relaxed">
-                  LexiTrade AI bridges cryptocurrency regulatory claims with verified market evidence. 
-                  Every practice trade is governed by deterministic rules, auditable risk limits, and a permanent decision ledger — completely eliminating ungrounded AI hallucinations.
-                </p>
-              </div>
-
-              {/* Workflow Pill Steps */}
-              <div className="mt-5 flex flex-wrap items-center gap-2 text-[11px] font-mono text-slate-400">
-                <span className="rounded-md border border-slate-800 bg-slate-950 px-2 py-1">1. News Input</span>
-                <ArrowRight className="h-3 w-3 text-slate-600" />
-                <span className="rounded-md border border-slate-800 bg-slate-950 px-2 py-1">2. Source Scraping</span>
-                <ArrowRight className="h-3 w-3 text-slate-600" />
-                <span className="rounded-md border border-slate-800 bg-slate-950 px-2 py-1">3. Live Binance Spot</span>
-                <ArrowRight className="h-3 w-3 text-slate-600" />
-                <span className="rounded-md border border-slate-800 bg-slate-950 px-2 py-1">4. 6-Rule Decision Engine</span>
-                <ArrowRight className="h-3 w-3 text-slate-600" />
-                <span className="rounded-md border border-emerald-500/30 bg-emerald-500/10 text-emerald-300 px-2 py-1">5. Audited Paper Trade</span>
-              </div>
-            </div>
-
-            {/* Input Form */}
+          <div className="space-y-4">
+            {/* Input Dispatcher */}
             <AnalysisForm onAnalyze={handleAnalyze} isLoading={isLoading} />
 
-            {/* Current Pipeline Result Section */}
+            {/* Execution Pipeline Results */}
             {currentResult && (
-              <div className="space-y-4 pt-2">
-                <div className="flex items-center justify-between border-b border-slate-800 pb-2">
-                  <h3 className="text-sm font-bold tracking-wider text-slate-200 uppercase">
-                    Execution Pipeline Evidence & Audit Trail
-                  </h3>
-                  <span className="font-mono text-xs text-slate-500">
-                    Ref: {currentResult.analysis.id}
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-                  <VerificationCard
-                    analysis={currentResult.analysis}
-                    evidences={currentResult.evidences}
-                  />
-                  <RegulatoryCard analysis={currentResult.analysis} />
-                </div>
-
+              <div className="space-y-3 pt-1">
+                {/* Real-Time Market Ticker Header */}
                 <MarketCard
                   observation={currentResult.marketObservation}
                   error={currentResult.marketError}
                   asset={currentResult.primaryAsset}
                 />
 
-                <DecisionCard decision={currentResult.decision} />
+                {/* 2-Column Institutional Terminal Grid */}
+                <div className="grid grid-cols-1 gap-3 lg:grid-cols-2 items-start">
+                  {/* Left Column: Evidence & Verification */}
+                  <div className="space-y-3">
+                    <VerificationCard
+                      analysis={currentResult.analysis}
+                      evidences={currentResult.evidences}
+                    />
+                    <RegulatoryCard analysis={currentResult.analysis} />
+                  </div>
 
-                {currentResult.paperTrade && (
-                  <PaperTradeCard
-                    trade={currentResult.paperTrade}
-                    onCloseTrade={handleCloseTrade}
-                  />
-                )}
+                  {/* Right Column: Deterministic Rule Matrix & Practice Execution */}
+                  <div className="space-y-3">
+                    <DecisionCard decision={currentResult.decision} />
+                    {currentResult.paperTrade && (
+                      <PaperTradeCard
+                        trade={currentResult.paperTrade}
+                        onCloseTrade={handleCloseTrade}
+                      />
+                    )}
+                  </div>
+                </div>
               </div>
             )}
           </div>
         )}
 
-        {/* Analyses Ledger Tab */}
+        {/* Audit Ledger Tab */}
         {activeTab === "analyses" && (
           <AnalysesLedgerView
             analyses={analysesList}
@@ -220,7 +187,7 @@ export default function HomePage() {
           />
         )}
 
-        {/* Paper Trades Tab */}
+        {/* Positions Tab */}
         {activeTab === "trades" && (
           <TradesHistoryView
             trades={tradesList}
@@ -229,17 +196,23 @@ export default function HomePage() {
         )}
       </main>
 
-      {/* Inspect Record Modal */}
+      {/* Audit Trail Inspector Modal */}
       <InspectModal
         analysisId={inspectId}
         onClose={() => setInspectId(null)}
       />
 
-      {/* Footer */}
-      <footer className="border-t border-slate-900 bg-slate-950/80 py-4 text-center text-xs text-slate-500">
-        <div className="mx-auto max-w-7xl px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
-          <span>LexiTrade AI • BLI Legal Tech Hackathon 2 (RYO-CHAN Track)</span>
-          <span>Practice Paper Trading Engine • Virtual Funds Only</span>
+      {/* Terminal Footer */}
+      <footer className="border-t border-zinc-900 bg-zinc-950 py-3 font-mono text-[11px] text-zinc-500">
+        <div className="mx-auto max-w-7xl px-4 flex flex-col sm:flex-row items-center justify-between gap-1 sm:px-6">
+          <div className="flex items-center gap-2">
+            <span>LEXITRADE/TERMINAL</span>
+            <span className="text-zinc-700">•</span>
+            <span>BLI LEGAL TECH HACKATHON 2 (RYO-CHAN TRACK)</span>
+          </div>
+          <div>
+            <span>PRACTICE SIMULATION ONLY — VIRTUAL FUNDS</span>
+          </div>
         </div>
       </footer>
     </div>
