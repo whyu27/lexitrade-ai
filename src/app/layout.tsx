@@ -16,6 +16,9 @@ export const metadata: Metadata = {
   title: "LexiTrade AI — From Regulatory News to Explainable Practice Trades",
   description:
     "AI-assisted autonomous agent connecting crypto regulatory news with verifiable market evidence and auditable simulated practice trades.",
+  icons: {
+    icon: "/favicon.svg",
+  },
 };
 
 export default function RootLayout({

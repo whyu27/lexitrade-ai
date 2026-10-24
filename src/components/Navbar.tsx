@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { Logo } from "@/components/Logo";
 
 interface NavbarProps {
   activeTab: "dashboard" | "analyses" | "trades";
@@ -19,14 +20,7 @@ export function Navbar({
     <header className="border-b border-zinc-800 bg-zinc-950 text-xs">
       <div className="mx-auto flex h-12 max-w-7xl items-center justify-between px-4 sm:px-6">
         {/* Brand */}
-        <div className="flex items-center gap-2.5">
-          <span className="font-semibold tracking-tight text-sm text-zinc-100">
-            LexiTrade
-          </span>
-          <span className="text-[11px] font-mono text-zinc-500">
-            / Autonomous Practice Agent
-          </span>
-        </div>
+        <Logo size="sm" showWordmark={true} />
 
         {/* Center / Navigation Tabs */}
         <nav className="flex items-center gap-1">
