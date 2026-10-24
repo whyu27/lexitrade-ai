@@ -1,9 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
-import { AnalyzeRequestSchema, type Analysis, type Evidence } from "@/lib/schemas";
+import {
+  AnalyzeRequestSchema,
+  type Analysis,
+  type Evidence,
+  type PaperTrade,
+} from "@/lib/schemas";
 import { getNewsVerifier } from "@/lib/verification/news-verifier";
 import { getRegulatoryAnalyzer } from "@/lib/analysis/regulatory-analyzer";
 import { getMarketDataService, StaleMarketDataError } from "@/lib/market";
-import { saveAnalysis, saveEvidence } from "@/lib/db/client";
+import { getDecisionEngine } from "@/lib/engine/decision-engine";
+import { getPaperTradingEngine } from "@/lib/paper-trading/paper-trading-engine";
+import {
+  saveAnalysis,
+  saveEvidence,
+  saveDecision,
+  savePaperTrade,
+} from "@/lib/db/client";
 
 export async function POST(request: NextRequest) {
   try {
@@ -79,7 +91,7 @@ export async function POST(request: NextRequest) {
       jurisdiction: analysisOutput.jurisdiction,
     };
 
-    // 6. Persist to Database
+    // 6. Persist Analysis and Evidences
     await saveAnalysis(analysisRecord);
     await saveEvidence(newsEvidence);
     if (marketEvidence) {
@@ -88,11 +100,33 @@ export async function POST(request: NextRequest) {
 
     const allEvidences = [newsEvidence, ...(marketEvidence ? [marketEvidence] : [])];
 
+    // 7. Deterministic Decision Engine Evaluation
+    const decisionEngine = getDecisionEngine();
+    const engineResult = decisionEngine.evaluate(
+      analysisRecord,
+      allEvidences,
+      marketObservation
+    );
+    await saveDecision(engineResult.decision);
+
+    // 8. Paper Trading Engine Execution (if decision is BUY)
+    let paperTrade: PaperTrade | null = null;
+    if (engineResult.decision.outcome === "BUY" && engineResult.proposedTrade) {
+      const paperEngine = getPaperTradingEngine();
+      paperTrade = paperEngine.createTradeFromDecision(
+        engineResult.decision.id,
+        engineResult.proposedTrade
+      );
+      await savePaperTrade(paperTrade);
+    }
+
     return NextResponse.json({
       success: true,
       data: {
         analysis: analysisRecord,
         evidences: allEvidences,
+        decision: engineResult.decision,
+        paperTrade,
         primaryAsset,
         marketObservation,
         marketError,

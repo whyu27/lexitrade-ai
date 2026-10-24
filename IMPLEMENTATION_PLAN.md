@@ -102,59 +102,64 @@ The application does not mark a claim as verified based solely on an LLM's asser
 ## Phase 4 — Deterministic Decision Engine
 
 ### Tasks
-- [ ] Define the initial strategy and its explicit conditions.
-- [ ] Define supported signals and their required evidence.
-- [ ] Define configurable risk limits.
-- [ ] Implement BUY and NO TRADE outcomes.
-- [ ] Require valid, sufficiently fresh market evidence.
-- [ ] Reject decisions when mandatory verification or data conditions fail.
-- [ ] Assign a version to each strategy configuration.
-- [ ] Record which rules passed or failed.
-- [ ] Write unit tests for positive, negative, and edge cases.
+- [x] Define the initial strategy and its explicit conditions (Strategy `v1.0.0` Regulatory Momentum).
+- [x] Define supported signals and their required evidence (6 explicit rules).
+- [x] Define configurable risk limits (max position, stop-loss, take-profit).
+- [x] Implement BUY and NO TRADE outcomes.
+- [x] Require valid, sufficiently fresh market evidence.
+- [x] Reject decisions when mandatory verification or data conditions fail.
+- [x] Assign a version to each strategy configuration.
+- [x] Record which rules passed or failed with audit explanations.
+- [x] Write unit tests for positive, negative, and edge cases.
 
 ### Deliverables
-A deterministic decision engine that produces reproducible outcomes from the same inputs and rule version.
+- `DecisionEngine` evaluating 6 explicit rules (`RULE_VERIFIED_NEWS`, `RULE_BULLISH_SENTIMENT`, `RULE_ACCEPTABLE_REGULATORY_RISK`, `RULE_VALID_MARKET_EVIDENCE`, `RULE_MARKET_TREND_STABILITY`, `RULE_RISK_LIMITS`).
+- Output: Reproducible `BUY` or `NO_TRADE` with recorded rule results and rejection explanations.
+- Comprehensive test suite in `tests/decision-engine.test.ts`.
 
 ### Exit Criteria
-The engine never opens a paper trade when mandatory evidence or risk conditions fail.
+The engine never opens a paper trade when mandatory evidence or risk conditions fail. — **COMPLETED**
 
 ## Phase 5 — Paper Trading Engine
 
 ### Tasks
-- [ ] Define the virtual starting balance.
-- [ ] Implement entry-price selection using documented market data.
-- [ ] Implement position sizing.
-- [ ] Implement stop-loss and take-profit calculations.
-- [ ] Validate position and loss limits.
-- [ ] Store simulated trades.
-- [ ] Evaluate exits using subsequent market observations.
-- [ ] Calculate P/L, fees, and other costs only when explicitly modeled.
-- [ ] Prevent duplicate trade creation.
-- [ ] Record trade lifecycle events.
+- [x] Define the virtual starting balance ($100,000 virtual balance).
+- [x] Implement entry-price selection using documented market data.
+- [x] Implement position sizing (10% max allocation, asset-based unit calculation).
+- [x] Implement stop-loss and take-profit calculations (3% SL, 6% TP, 2:1 R/R ratio).
+- [x] Validate position and loss limits in `RiskValidator`.
+- [x] Store simulated trades in SQLite database.
+- [x] Evaluate exits using subsequent market observations (`STOP_LOSS_HIT`, `TAKE_PROFIT_HIT`).
+- [x] Calculate P/L, fees, and other costs only when explicitly modeled.
+- [x] Prevent duplicate trade creation.
+- [x] Record trade lifecycle events (`OPEN`, `CLOSED`, `CANCELLED`).
 
 ### Deliverables
-A simulated trading engine that uses virtual funds and records its assumptions.
+- `RiskValidator` and `PaperTradingEngine` with automated exit evaluation and manual trade closing.
+- Endpoints: `GET /api/trades` and `POST /api/trades/[id]/close`.
+- Test suite in `tests/paper-trading.test.ts` verifying position sizing, SL/TP calculation, and exits.
 
 ### Exit Criteria
-A user can open a permitted paper trade, inspect its parameters, and review its subsequent simulated outcome.
+A user can open a permitted paper trade, inspect its parameters, and review its subsequent simulated outcome. — **COMPLETED**
 
 ## Phase 6 — Evidence and Decision Trail
 
 ### Tasks
-- [ ] Define persistent models for analyses, evidence, decisions, and paper trades.
-- [ ] Link each decision to its supporting evidence.
-- [ ] Store timestamps and strategy versions.
-- [ ] Record the decision outcome and rule evaluation results.
-- [ ] Store trade opening and closing events.
-- [ ] Implement analysis-history and trade-history retrieval.
-- [ ] Support inspection of individual records.
-- [ ] Test that historical records remain available after application restarts.
+- [x] Define persistent models for analyses, evidence, decisions, and paper trades.
+- [x] Link each decision to its supporting evidence via foreign keys and JSON arrays.
+- [x] Store timestamps and strategy versions.
+- [x] Record the decision outcome and rule evaluation results.
+- [x] Store trade opening and closing events.
+- [x] Implement analysis-history and trade-history retrieval.
+- [x] Support inspection of individual records via `/api/analyses/[id]`.
+- [x] Test that historical records remain available after application restarts.
 
 ### Deliverables
-A persistent, inspectable decision trail.
+- SQLite schema with foreign-key relationships connecting `analyses`, `evidences`, `decisions`, and `paper_trades`.
+- Complete auditable data trail queryable via `getAnalysisById` and API endpoints.
 
 ### Exit Criteria
-A reviewer can trace a simulated trade back to its news claim, market observations, and decision rules.
+A reviewer can trace a simulated trade back to its news claim, market observations, and decision rules. — **COMPLETED**
 
 ## Phase 7 — Dashboard
 
