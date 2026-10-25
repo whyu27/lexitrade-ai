@@ -23,7 +23,7 @@ export class MarketDataService {
       : [new BinanceAdapter(), new CoinPaprikaAdapter()];
 
     this.defaultMaxAgeSec = defaultMaxAgeSec ?? (
-      parseInt(process.env.MARKET_DATA_FRESHNESS_SEC || "300", 10) || 300
+      parseInt(process.env.MARKET_DATA_FRESHNESS_SEC || "600", 10) || 600
     );
   }
 
