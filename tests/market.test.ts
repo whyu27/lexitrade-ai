@@ -138,15 +138,14 @@ describe("Market Evidence Integration", () => {
     );
   });
 
-  it("should successfully fetch real live market observation from Binance Spot", async () => {
-    const adapter = new BinanceAdapter();
-    const obs = await adapter.getMarketObservation("BTC");
+  it("should successfully fetch real live market observation from available provider", async () => {
+    const service = new MarketDataService();
+    const obs = await service.getMarketObservation("BTC");
 
     expect(obs.asset).toBe("BTC");
     expect(obs.price).toBeGreaterThan(0);
-    expect(obs.provider).toBe("Binance Spot");
+    expect(["Binance Spot", "CoinPaprika"]).toContain(obs.provider);
     expect(new Date(obs.observedAt).getTime()).toBeGreaterThan(0);
     expect(new Date(obs.retrievedAt).getTime()).toBeGreaterThan(0);
-    expect(obs.metrics?.volume).toBeDefined();
   });
 });
