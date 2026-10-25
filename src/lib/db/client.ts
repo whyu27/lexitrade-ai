@@ -9,12 +9,19 @@ import type {
 
 let clientInstance: Client | null = null;
 let lastDbUrl: string | null = null;
+let lastAuthToken: string | null = null;
 
 export function getDb(): Client {
   const url = process.env.DATABASE_URL || "file:lexitrade.db";
-  if (!clientInstance || lastDbUrl !== url) {
-    clientInstance = createClient({ url });
+  const authToken = process.env.DATABASE_AUTH_TOKEN || process.env.TURSO_AUTH_TOKEN;
+
+  if (!clientInstance || lastDbUrl !== url || lastAuthToken !== (authToken || null)) {
+    clientInstance = createClient({
+      url,
+      authToken: authToken || undefined,
+    });
     lastDbUrl = url;
+    lastAuthToken = authToken || null;
     initialized = false;
   }
   return clientInstance;
