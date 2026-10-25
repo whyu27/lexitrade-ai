@@ -208,7 +208,7 @@ All unit, integration, and E2E tests pass reliably without errors. — **COMPLET
 - [x] Verify production data-provider access (Binance Spot & CoinPaprika).
 - [x] Prepare a comprehensive README with setup, architecture diagrams, and usage guidelines.
 - [x] Document the evidence sources and decision strategy.
-- [ ] Deploy the application to Vercel / self-hosted node.
+- [x] Deploy the application to Vercel / self-hosted node (Live at https://lexitrade-ai.vercel.app/).
 - [ ] Submit the project and required links to DoraHacks.
 
 ### Deliverables
