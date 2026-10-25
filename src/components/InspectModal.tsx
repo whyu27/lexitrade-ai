@@ -23,6 +23,18 @@ export function InspectModal({ analysisId, onClose }: InspectModalProps) {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    if (analysisId) {
+      window.addEventListener("keydown", handleKeyDown);
+    }
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [analysisId, onClose]);
+
+  useEffect(() => {
     if (!analysisId) return;
     setLoading(true);
 
