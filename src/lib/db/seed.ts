@@ -102,7 +102,7 @@ export async function seedInitialDemoData(force = false): Promise<{ seeded: bool
     asset: "BTC",
     direction: "LONG",
     entryPrice: 67850.25,
-    positionSize: 5000.0,
+    positionSize: 0.073692, // $5,000 USD allocation (~0.0737 BTC)
     stopLoss: 65814.74, // -3%
     takeProfit: 71921.27, // +6%
     openedAt: t1,
